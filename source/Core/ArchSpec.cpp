@@ -193,6 +193,9 @@ static const CoreDefinition g_core_definitions[] = {
     {eByteOrderBig, 8, 4, 4, llvm::Triple::ppc64,
      ArchSpec::eCore_ppc64_ppc970_64, "ppc970-64"},
 
+    {eByteOrderLittle, 8, 4, 4, llvm::Triple::ppc64le,
+      ArchSpec::eCore_ppc64le_generic, "ppc64le"},
+
     {eByteOrderBig, 8, 2, 6, llvm::Triple::systemz,
      ArchSpec::eCore_s390x_generic, "s390x"},
 
@@ -374,6 +377,8 @@ static const ArchDefinitionEntry g_macho_arch_entries[] = {
      UINT32_MAX, SUBTYPE_MASK},
     {ArchSpec::eCore_ppc64_ppc970_64, llvm::MachO::CPU_TYPE_POWERPC64, 100,
      UINT32_MAX, SUBTYPE_MASK},
+    {ArchSpec::eCore_ppc64le_generic, llvm::MachO::CPU_TYPE_POWERPC64, CPU_ANY,
+     UINT32_MAX, SUBTYPE_MASK},
     {ArchSpec::eCore_x86_32_i386, llvm::MachO::CPU_TYPE_I386, 3, UINT32_MAX,
      SUBTYPE_MASK},
     {ArchSpec::eCore_x86_32_i486, llvm::MachO::CPU_TYPE_I386, 4, UINT32_MAX,
@@ -416,6 +421,8 @@ static const ArchDefinitionEntry g_elf_arch_entries[] = {
      0xFFFFFFFFu, 0xFFFFFFFFu}, // PowerPC
     {ArchSpec::eCore_ppc64_generic, llvm::ELF::EM_PPC64, LLDB_INVALID_CPUTYPE,
      0xFFFFFFFFu, 0xFFFFFFFFu}, // PowerPC64
+    {ArchSpec::eCore_ppc64le_generic, llvm::ELF::EM_PPC64, LLDB_INVALID_CPUTYPE,
+     0xFFFFFFFFu, 0xFFFFFFFFu}, // PPC64le
     {ArchSpec::eCore_arm_generic, llvm::ELF::EM_ARM, LLDB_INVALID_CPUTYPE,
      0xFFFFFFFFu, 0xFFFFFFFFu}, // ARM
     {ArchSpec::eCore_arm_aarch64, llvm::ELF::EM_AARCH64, LLDB_INVALID_CPUTYPE,

@@ -1639,6 +1639,7 @@ Status NativeProcessLinux::GetSoftwareBreakpointTrapOpcode(
   static const uint8_t g_mips64el_opcode[] = {0x0d, 0x00, 0x00, 0x00};
   static const uint8_t g_s390x_opcode[] = {0x00, 0x01};
   static const uint8_t g_thumb_breakpoint_opcode[] = {0x01, 0xde};
+  static const uint8_t g_ppc64_opcode[] = {0x08, 0x00, 0xe0, 0x7f}; // trap
 
   switch (m_arch.GetMachine()) {
   case llvm::Triple::aarch64:
@@ -1682,6 +1683,11 @@ Status NativeProcessLinux::GetSoftwareBreakpointTrapOpcode(
   case llvm::Triple::systemz:
     trap_opcode_bytes = g_s390x_opcode;
     actual_opcode_size = sizeof(g_s390x_opcode);
+    return Status();
+
+  case llvm::Triple::ppc64le:
+    trap_opcode_bytes = g_ppc64_opcode;
+    actual_opcode_size = sizeof(g_ppc64_opcode);
     return Status();
 
   default:
