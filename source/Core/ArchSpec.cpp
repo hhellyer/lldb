@@ -188,13 +188,12 @@ static const CoreDefinition g_core_definitions[] = {
     {eByteOrderBig, 4, 4, 4, llvm::Triple::ppc, ArchSpec::eCore_ppc_ppc970,
      "ppc970"},
 
+    {eByteOrderLittle, 8, 4, 4, llvm::Triple::ppc64le,
+      ArchSpec::eCore_ppc64le_generic, "powerpc64le"},
     {eByteOrderBig, 8, 4, 4, llvm::Triple::ppc64, ArchSpec::eCore_ppc64_generic,
      "powerpc64"},
     {eByteOrderBig, 8, 4, 4, llvm::Triple::ppc64,
      ArchSpec::eCore_ppc64_ppc970_64, "ppc970-64"},
-
-    {eByteOrderLittle, 8, 4, 4, llvm::Triple::ppc64le,
-      ArchSpec::eCore_ppc64le_generic, "ppc64le"},
 
     {eByteOrderBig, 8, 2, 6, llvm::Triple::systemz,
      ArchSpec::eCore_s390x_generic, "s390x"},
