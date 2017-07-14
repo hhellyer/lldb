@@ -1082,7 +1082,8 @@ NativeProcessLinux::SetupSoftwareSingleStepping(NativeThreadLinux &thread) {
   } else if (m_arch.GetMachine() == llvm::Triple::mips64 ||
              m_arch.GetMachine() == llvm::Triple::mips64el ||
              m_arch.GetMachine() == llvm::Triple::mips ||
-             m_arch.GetMachine() == llvm::Triple::mipsel)
+             m_arch.GetMachine() == llvm::Triple::mipsel ||
+             m_arch.GetMachine() == llvm::Triple::ppc64le)
     error = SetSoftwareBreakpoint(next_pc, 4);
   else {
     // No size hint is given for the next breakpoint
@@ -1583,6 +1584,7 @@ Status NativeProcessLinux::GetSoftwareBreakpointPCOffset(
   // set per architecture.  Need ARM, MIPS support here.
   static const uint8_t g_i386_opcode[] = {0xCC};
   static const uint8_t g_s390x_opcode[] = {0x00, 0x01};
+  static const uint8_t g_ppc64le_opcode[] = {0x08, 0x00, 0xe0, 0x7f}; // trap
 
   switch (m_arch.GetMachine()) {
   case llvm::Triple::x86:
@@ -1592,6 +1594,10 @@ Status NativeProcessLinux::GetSoftwareBreakpointPCOffset(
 
   case llvm::Triple::systemz:
     actual_opcode_size = static_cast<uint32_t>(sizeof(g_s390x_opcode));
+    return Status();
+
+  case llvm::Triple::ppc64le:
+    actual_opcode_size = static_cast<uint32_t>(sizeof(g_ppc64le_opcode));
     return Status();
 
   case llvm::Triple::arm:
@@ -1639,7 +1645,7 @@ Status NativeProcessLinux::GetSoftwareBreakpointTrapOpcode(
   static const uint8_t g_mips64el_opcode[] = {0x0d, 0x00, 0x00, 0x00};
   static const uint8_t g_s390x_opcode[] = {0x00, 0x01};
   static const uint8_t g_thumb_breakpoint_opcode[] = {0x01, 0xde};
-  static const uint8_t g_ppc64_opcode[] = {0x08, 0x00, 0xe0, 0x7f}; // trap
+  static const uint8_t g_ppc64le_opcode[] = {0x08, 0x00, 0xe0, 0x7f}; // trap
 
   switch (m_arch.GetMachine()) {
   case llvm::Triple::aarch64:
@@ -1686,8 +1692,8 @@ Status NativeProcessLinux::GetSoftwareBreakpointTrapOpcode(
     return Status();
 
   case llvm::Triple::ppc64le:
-    trap_opcode_bytes = g_ppc64_opcode;
-    actual_opcode_size = sizeof(g_ppc64_opcode);
+    trap_opcode_bytes = g_ppc64le_opcode;
+    actual_opcode_size = sizeof(g_ppc64le_opcode);
     return Status();
 
   default:
