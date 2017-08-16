@@ -875,26 +875,23 @@ Status NativeRegisterContextLinux_ppc64le::DoReadRegisterValue(
 
     bool isPc = strcmp(reg_name, "pc") == 0;
 
-	if (isPc) {
-		error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET,
-				m_thread.GetID(), &regset, &regs_p, sizeof regs_p);
-	} else {
-		error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET,
-				m_thread.GetID(), &regset, &ioVec, sizeof regs);
-	}
+    if (isPc) {
+        error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET,
+                    m_thread.GetID(), &regset, &regs_p, sizeof regs_p);
+    } else {
+        error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET,
+                    m_thread.GetID(), &regset, &ioVec, sizeof regs);
+    }
 
     if (error.Success()) {
       ArchSpec arch;
       if (m_thread.GetProcess()->GetArchitecture(arch))
-		if (isPc) {
-			value.SetBytes(
-					&regs_p.nip, 8,
-					arch.GetByteOrder());
-		} else {
-			value.SetBytes(
-					(void *) (((unsigned char *) (regs)) + offset), 8,
-					arch.GetByteOrder());
-		}
+        if (isPc) {
+            value.SetBytes(&regs_p.nip, 8, arch.GetByteOrder());
+        } else {
+            value.SetBytes((void *) (((unsigned char *) (regs)) + offset), 8,
+                           arch.GetByteOrder());
+        }
       else
         error.SetErrorString("failed to get architecture");
     }
