@@ -92,6 +92,7 @@
       DEFINE_GPR(cr, "cr", LLDB_REGNUM_GENERIC_FLAGS),                         \
       DEFINE_GPR(xer, "xer", LLDB_INVALID_REGNUM),                             \
       DEFINE_GPR(ctr, "ctr", LLDB_INVALID_REGNUM),                             \
+      DEFINE_GPR(pc, "pc", LLDB_REGNUM_GENERIC_PC),                            \
       DEFINE_FPR(f0, LLDB_INVALID_REGNUM),                                     \
       DEFINE_FPR(f1, LLDB_INVALID_REGNUM),                                     \
       DEFINE_FPR(f2, LLDB_INVALID_REGNUM),                                     \
@@ -195,6 +196,7 @@ typedef struct _GPR {
   uint64_t cr;
   uint64_t xer;
   uint64_t ctr;
+  uint64_t pc;
 } GPR;
 
 typedef struct _FPR {

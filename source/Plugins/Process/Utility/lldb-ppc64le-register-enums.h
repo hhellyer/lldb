@@ -53,9 +53,8 @@ enum {
   gpr_cr_ppc64le,
   gpr_xer_ppc64le,
   gpr_ctr_ppc64le,
-//  gpr_pc_ppc64le,
-//  k_last_gpr_ppc64le = gpr_pc_ppc64le,
-  k_last_gpr_ppc64le = gpr_ctr_ppc64le,
+  gpr_pc_ppc64le,
+  k_last_gpr_ppc64le = gpr_pc_ppc64le,
 
   k_first_fpr_ppc64le,
   fpr_f0_ppc64le = k_first_fpr_ppc64le,

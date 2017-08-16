@@ -14,7 +14,6 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "RegisterContext_powerpc.h"
 #include "RegisterInfoInterface.h"
 #include "lldb-ppc64le-register-enums.h"
 #include "lldb/Target/RegisterContext.h"

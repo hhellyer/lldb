@@ -117,6 +117,7 @@ enum {
   dwarf_v31_ppc64le,
 
   dwarf_vscr_ppc64le = 110,
+  dwarf_pc_ppc64le,
 };
 
 } // namespace ppc64le_dwarf
