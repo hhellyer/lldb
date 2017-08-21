@@ -88,11 +88,14 @@
       DEFINE_GPR(r29, NULL, LLDB_INVALID_REGNUM),                              \
       DEFINE_GPR(r30, NULL, LLDB_INVALID_REGNUM),                              \
       DEFINE_GPR(r31, NULL, LLDB_INVALID_REGNUM),                              \
-      DEFINE_GPR(lr, "lr", LLDB_REGNUM_GENERIC_RA),                            \
-      DEFINE_GPR(cr, "cr", LLDB_REGNUM_GENERIC_FLAGS),                         \
-      DEFINE_GPR(xer, "xer", LLDB_INVALID_REGNUM),                             \
-      DEFINE_GPR(ctr, "ctr", LLDB_INVALID_REGNUM),                             \
       DEFINE_GPR(pc, "pc", LLDB_REGNUM_GENERIC_PC),                            \
+      DEFINE_GPR(lr, "lr", LLDB_INVALID_REGNUM),                               \
+      DEFINE_GPR(msr, "msr", LLDB_INVALID_REGNUM),                             \
+      DEFINE_GPR(origr3, "orig_r3", LLDB_INVALID_REGNUM),                      \
+      DEFINE_GPR(ctr, "ctr", LLDB_INVALID_REGNUM),                             \
+      DEFINE_GPR(xer, "xer", LLDB_INVALID_REGNUM),                             \
+      DEFINE_GPR(cr, "cr", LLDB_REGNUM_GENERIC_FLAGS),                         \
+      DEFINE_GPR(trap, "trap", LLDB_REGNUM_GENERIC_FLAGS),                     \
       DEFINE_FPR(f0, LLDB_INVALID_REGNUM),                                     \
       DEFINE_FPR(f1, LLDB_INVALID_REGNUM),                                     \
       DEFINE_FPR(f2, LLDB_INVALID_REGNUM),                                     \
@@ -192,11 +195,14 @@ typedef struct _GPR {
   uint64_t r29;
   uint64_t r30;
   uint64_t r31;
-  uint64_t lr;
-  uint64_t cr;
-  uint64_t xer;
-  uint64_t ctr;
   uint64_t pc;
+  uint64_t msr;
+  uint64_t origr3;
+  uint64_t ctr;
+  uint64_t lr;
+  uint64_t xer;
+  uint64_t cr;
+  uint64_t trap;
 } GPR;
 
 typedef struct _FPR {

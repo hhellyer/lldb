@@ -36,8 +36,8 @@ static const uint32_t g_gpr_regnums[] = {
     gpr_r20_ppc64le, gpr_r21_ppc64le, gpr_r22_ppc64le, gpr_r23_ppc64le,
     gpr_r24_ppc64le, gpr_r25_ppc64le, gpr_r26_ppc64le, gpr_r27_ppc64le,
     gpr_r28_ppc64le, gpr_r29_ppc64le, gpr_r30_ppc64le, gpr_r31_ppc64le,
-    gpr_lr_ppc64le,  gpr_cr_ppc64le,  gpr_xer_ppc64le, gpr_ctr_ppc64le,
-    gpr_pc_ppc64le,
+    gpr_pc_ppc64le, gpr_msr_ppc64le, gpr_origr3_ppc64le, gpr_ctr_ppc64le,
+    gpr_lr_ppc64le, gpr_xer_ppc64le, gpr_cr_ppc64le, gpr_trap_ppc64le,
 };
 
 static const uint32_t g_fpr_regnums[] = {

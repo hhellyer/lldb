@@ -79,10 +79,11 @@ enum {
   dwarf_f29_ppc64le,
   dwarf_f30_ppc64le,
   dwarf_f31_ppc64le,
-  dwarf_lr_ppc64le = 65,
+  dwarf_cr_ppc64le = 64,
+  dwarf_msr_ppc64le = 66,
+  dwarf_lr_ppc64le = 108,
   dwarf_ctr_ppc64le,
-  dwarf_cr_ppc64le = 68,
-  dwarf_xer_ppc64le = 76,
+  dwarf_xer_ppc64le = 101,
   dwarf_v0_ppc64le,
   dwarf_v1_ppc64le,
   dwarf_v2_ppc64le,
@@ -118,6 +119,8 @@ enum {
 
   dwarf_vscr_ppc64le = 110,
   dwarf_pc_ppc64le,
+  dwarf_trap_ppc64le,
+  dwarf_origr3_ppc64le,
 };
 
 } // namespace ppc64le_dwarf

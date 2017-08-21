@@ -64,8 +64,6 @@ protected:
 
     uint32_t first_fpr_v;
     uint32_t last_fpr_v;
-
-    uint32_t gpr_flags;
   };
 
   struct VReg {
