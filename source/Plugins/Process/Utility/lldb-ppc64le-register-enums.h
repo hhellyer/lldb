@@ -92,9 +92,8 @@ enum {
   fpr_f29_ppc64le,
   fpr_f30_ppc64le,
   fpr_f31_ppc64le,
-//  fpr_fpscr_ppc64le,
-//  k_last_fpr_ppc64le = fpr_fpscr_ppc64le,
-  k_last_fpr_ppc64le = fpr_f31_ppc64le,
+  fpr_fpscr_ppc64le,
+  k_last_fpr_ppc64le = fpr_fpscr_ppc64le,
 
   k_first_vmx_ppc64le,
   vmx_v0_ppc64le = k_first_vmx_ppc64le,

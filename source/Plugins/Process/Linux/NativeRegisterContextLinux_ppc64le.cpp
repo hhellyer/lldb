@@ -839,31 +839,32 @@ Status NativeRegisterContextLinux_ppc64le::DoReadRegisterValue(
     uint32_t offset, const char *reg_name, uint32_t size,
     RegisterValue &value) {
   Status error;
-#if 0
-  if (offset > sizeof(struct user_pt_regs)) {
-    uintptr_t offset = offset - sizeof(struct user_pt_regs);
-    if (offset > sizeof(struct user_fpsimd_state)) {
+  if (offset > sizeof(elf_gregset_t)) {
+    uintptr_t offset = offset - sizeof(elf_gregset_t);
+
+    if (offset > sizeof(elf_fpregset_t)) {
       error.SetErrorString("invalid offset value");
       return error;
     }
+
     elf_fpregset_t regs;
     int regset = NT_FPREGSET;
-    struct iovec ioVec;
 
-    ioVec.iov_base = &regs;
-    ioVec.iov_len = sizeof regs;
     error = NativeProcessLinux::PtraceWrapper(
-        PTRACE_GETREGSET, m_thread.GetID(), &regset, &ioVec, sizeof regs);
+            PTRACE_GETFPREGS, m_thread.GetID(), &regset, &regs, sizeof regs);
+
     if (error.Success()) {
       ArchSpec arch;
       if (m_thread.GetProcess()->GetArchitecture(arch))
-        value.SetBytes((void *)(((unsigned char *)(&regs)) + offset), 16,
-                       arch.GetByteOrder());
+//        value.SetBytes((void *)(((unsigned char *)(&regs)) + offset), 16,
+//                       arch.GetByteOrder());
+
+        value.SetBytes((void *) (((unsigned char *) (regs)) + offset),
+              8, arch.GetByteOrder());
       else
         error.SetErrorString("failed to get architecture");
     }
   } else
-#endif
   {
     elf_gregset_t regs;
     int regset = NT_PRSTATUS;

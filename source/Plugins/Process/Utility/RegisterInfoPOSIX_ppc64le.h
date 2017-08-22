@@ -18,7 +18,7 @@ class RegisterInfoPOSIX_ppc64le : public lldb_private::RegisterInfoInterface {
 public:
   // based on RegisterContextDarwin_ppc64le.h
   struct GPR {
-    uint64_t x[29]; // x0-x28
+    uint64_t x[32]; // x0-x32
     uint64_t fp;    // x29
     uint64_t lr;    // x30
     uint64_t sp;    // x31
@@ -34,8 +34,7 @@ public:
   // based on RegisterContextDarwin_ppc64le.h
   struct FPU {
     VReg v[32];
-    uint32_t fpsr;
-    uint32_t fpcr;
+    uint64_t fpscr;
   };
 
   // based on RegisterContextDarwin_ppc64le.h

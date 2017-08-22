@@ -33,9 +33,9 @@
                                           gpr_##reg##_ppc64le },               \
                                           NULL, NULL, NULL, 0                  \
   }
-#define DEFINE_FPR(reg, lldb_kind)                                             \
+#define DEFINE_FPR(reg, alt, lldb_kind)                                             \
   {                                                                            \
-    #reg, NULL, 8, FPR_OFFSET(reg), lldb::eEncodingIEEE754, lldb::eFormatFloat,\
+    #reg, alt, 8, FPR_OFFSET(reg), lldb::eEncodingIEEE754, lldb::eFormatFloat,\
                               {ppc64le_dwarf::dwarf_##reg##_ppc64le,           \
                               ppc64le_dwarf::dwarf_##reg##_ppc64le,            \
                                lldb_kind, LLDB_INVALID_REGNUM,                 \
@@ -89,45 +89,46 @@
       DEFINE_GPR(r30, NULL, LLDB_INVALID_REGNUM),                              \
       DEFINE_GPR(r31, NULL, LLDB_INVALID_REGNUM),                              \
       DEFINE_GPR(pc, "pc", LLDB_REGNUM_GENERIC_PC),                            \
-      DEFINE_GPR(lr, "lr", LLDB_INVALID_REGNUM),                               \
+      DEFINE_GPR(lr, "lr", LLDB_REGNUM_GENERIC_RA),                            \
       DEFINE_GPR(msr, "msr", LLDB_INVALID_REGNUM),                             \
       DEFINE_GPR(origr3, "orig_r3", LLDB_INVALID_REGNUM),                      \
       DEFINE_GPR(ctr, "ctr", LLDB_INVALID_REGNUM),                             \
       DEFINE_GPR(xer, "xer", LLDB_INVALID_REGNUM),                             \
       DEFINE_GPR(cr, "cr", LLDB_REGNUM_GENERIC_FLAGS),                         \
-      DEFINE_GPR(trap, "trap", LLDB_REGNUM_GENERIC_FLAGS),                     \
-      DEFINE_FPR(f0, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f1, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f2, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f3, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f4, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f5, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f6, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f7, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f8, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f9, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_FPR(f10, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f11, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f12, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f13, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f14, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f15, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f16, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f17, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f18, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f19, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f20, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f21, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f22, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f23, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f24, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f25, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f26, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f27, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f28, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f29, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f30, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_FPR(f31, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_GPR(trap, "trap", LLDB_INVALID_REGNUM),                           \
+      DEFINE_FPR(f0, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f1, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f2, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f3, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f4, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f5, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f6, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f7, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f8, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f9, NULL, LLDB_INVALID_REGNUM),                               \
+      DEFINE_FPR(f10, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f11, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f12, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f13, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f14, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f15, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f16, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f17, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f18, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f19, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f20, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f21, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f22, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f23, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f24, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f25, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f26, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f27, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f28, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f29, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f30, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(f31, NULL, LLDB_INVALID_REGNUM),                              \
+      DEFINE_FPR(fpscr, "fpscr", LLDB_INVALID_REGNUM),                         \
       DEFINE_VMX(v0, LLDB_INVALID_REGNUM),                                     \
       DEFINE_VMX(v1, LLDB_INVALID_REGNUM),                                     \
       DEFINE_VMX(v2, LLDB_INVALID_REGNUM),                                     \
@@ -238,6 +239,7 @@ typedef struct _FPR {
   uint64_t f29;
   uint64_t f30;
   uint64_t f31;
+  uint64_t fpscr;
 } FPR;
 
 typedef struct _VMX {
