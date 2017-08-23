@@ -128,10 +128,8 @@ enum {
   vmx_v29_ppc64le,
   vmx_v30_ppc64le,
   vmx_v31_ppc64le,
-//  vmx_vrsave_ppc64le,
-//  vmx_vscr_ppc64le,
-//  k_last_vmx_ppc64le = vmx_vscr_ppc64le,
-  k_last_vmx_ppc64le = vmx_v31_ppc64le,
+  vmx_vscr_ppc64le,
+  k_last_vmx_ppc64le = vmx_vscr_ppc64le,
 
   k_num_registers_ppc64le,
   k_num_gpr_registers_ppc64le = k_last_gpr_ppc64le - k_first_gpr_ppc64le + 1,

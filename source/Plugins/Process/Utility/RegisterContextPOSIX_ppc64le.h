@@ -67,13 +67,13 @@ protected:
   };
 
   struct VReg {
-    uint8_t bytes[16];
+    uint8_t bytes[32];
+    uint32_t vscr;
   };
 
   struct FPU {
     VReg v[32];
     uint32_t fpsr;
-    uint32_t fpcr;
   };
 
   // 64-bit general purpose registers.

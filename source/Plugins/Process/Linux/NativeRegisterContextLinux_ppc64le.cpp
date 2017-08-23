@@ -63,6 +63,7 @@ static const uint32_t g_fpr_regnums_ppc64le[] = {
     fpr_f20_ppc64le,   fpr_f21_ppc64le, fpr_f22_ppc64le, fpr_f23_ppc64le,
     fpr_f24_ppc64le,   fpr_f25_ppc64le, fpr_f26_ppc64le, fpr_f27_ppc64le,
     fpr_f28_ppc64le,   fpr_f29_ppc64le, fpr_f30_ppc64le, fpr_f31_ppc64le,
+    fpr_fpscr_ppc64le,
 };
 
 static const uint32_t g_vmx_regnums_ppc64le[] = {
@@ -74,6 +75,7 @@ static const uint32_t g_vmx_regnums_ppc64le[] = {
     vmx_v20_ppc64le,    vmx_v21_ppc64le,  vmx_v22_ppc64le, vmx_v23_ppc64le,
     vmx_v24_ppc64le,    vmx_v25_ppc64le,  vmx_v26_ppc64le, vmx_v27_ppc64le,
     vmx_v28_ppc64le,    vmx_v29_ppc64le,  vmx_v30_ppc64le, vmx_v31_ppc64le,
+    vmx_vscr_ppc64le,
 };
 
 namespace {
@@ -117,7 +119,7 @@ NativeRegisterContextLinux_ppc64le::NativeRegisterContextLinux_ppc64le(
     m_reg_info.first_fpr = k_first_fpr_ppc64le;
     m_reg_info.last_fpr = k_last_fpr_ppc64le;
     m_reg_info.first_fpr_v = vmx_v0_ppc64le;
-    m_reg_info.last_fpr_v = vmx_v31_ppc64le;
+    m_reg_info.last_fpr_v = vmx_vscr_ppc64le;
     break;
   default:
     llvm_unreachable("Unhandled target architecture.");
@@ -856,9 +858,6 @@ Status NativeRegisterContextLinux_ppc64le::DoReadRegisterValue(
     if (error.Success()) {
       ArchSpec arch;
       if (m_thread.GetProcess()->GetArchitecture(arch))
-//        value.SetBytes((void *)(((unsigned char *)(&regs)) + offset), 16,
-//                       arch.GetByteOrder());
-
         value.SetBytes((void *) (((unsigned char *) (regs)) + offset),
               8, arch.GetByteOrder());
       else

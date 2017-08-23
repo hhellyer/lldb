@@ -16,41 +16,22 @@
 
 class RegisterInfoPOSIX_ppc64le : public lldb_private::RegisterInfoInterface {
 public:
-  // based on RegisterContextDarwin_ppc64le.h
   struct GPR {
-    uint64_t x[32]; // x0-x32
-    uint64_t fp;    // x29
-    uint64_t lr;    // x30
-    uint64_t sp;    // x31
-    uint64_t pc;    // pc
-    uint32_t cpsr;  // cpsr
+    uint64_t r[32]; // r0-r32
+    uint64_t lr;
+    uint64_t cr;
+    uint64_t ctr;
+    uint64_t xer;
   };
 
-  // based on RegisterContextDarwin_ppc64le.h
   struct VReg {
-    uint8_t bytes[16];
+    uint8_t bytes[32];
+    uint32_t vscr;
   };
 
-  // based on RegisterContextDarwin_ppc64le.h
   struct FPU {
     VReg v[32];
-    uint64_t fpscr;
-  };
-
-  // based on RegisterContextDarwin_ppc64le.h
-  struct EXC {
-    uint64_t far;       // Virtual Fault Address
-    uint32_t esr;       // Exception syndrome
-    uint32_t exception; // number of arm exception token
-  };
-
-  // based on RegisterContextDarwin_ppc64le.h
-  struct DBG {
-    uint64_t bvr[16];
-    uint64_t bcr[16];
-    uint64_t wvr[16];
-    uint64_t wcr[16];
-    uint64_t mdscr_el1;
+    uint32_t fpscr;
   };
 
   RegisterInfoPOSIX_ppc64le(const lldb_private::ArchSpec &target_arch);

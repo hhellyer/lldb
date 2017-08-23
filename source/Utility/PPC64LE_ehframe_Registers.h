@@ -81,12 +81,10 @@ enum {
   f29,
   f30,
   f31,
-  cr,
-  fpscr,
-  msr,
-  lr = 108,
+  lr = 65,
   ctr,
-  xer = 101,
+  cr = 68,
+  xer = 76,
   v0,
   v1,
   v2,
@@ -119,11 +117,12 @@ enum {
   v29,
   v30,
   v31,
-
   vscr = 110,
   pc,
   trap,
   origr3,
+  fpscr,
+  msr,
 };
 }
 

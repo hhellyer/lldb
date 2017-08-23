@@ -33,11 +33,11 @@
                                           gpr_##reg##_ppc64le },               \
                                           NULL, NULL, NULL, 0                  \
   }
-#define DEFINE_FPR(reg, alt, lldb_kind)                                             \
+#define DEFINE_FPR(reg, alt, lldb_kind)                                        \
   {                                                                            \
-    #reg, alt, 8, FPR_OFFSET(reg), lldb::eEncodingIEEE754, lldb::eFormatFloat,\
+    #reg, alt, 8, FPR_OFFSET(reg), lldb::eEncodingIEEE754, lldb::eFormatFloat, \
                               {ppc64le_dwarf::dwarf_##reg##_ppc64le,           \
-                              ppc64le_dwarf::dwarf_##reg##_ppc64le,            \
+                               ppc64le_dwarf::dwarf_##reg##_ppc64le,           \
                                lldb_kind, LLDB_INVALID_REGNUM,                 \
                                fpr_##reg##_ppc64le },                          \
                                NULL, NULL, NULL, 0                             \
@@ -161,6 +161,7 @@
       DEFINE_VMX(v29, LLDB_INVALID_REGNUM),                                    \
       DEFINE_VMX(v30, LLDB_INVALID_REGNUM),                                    \
       DEFINE_VMX(v31, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vscr, LLDB_INVALID_REGNUM),                                   \
       /* */
 
 typedef struct _GPR {
@@ -275,7 +276,7 @@ typedef struct _VMX {
   uint32_t v29[4];
   uint32_t v30[4];
   uint32_t v31[4];
-  uint32_t pad[2];
+  uint32_t vscr[2];
 } VMX;
 static lldb_private::RegisterInfo g_register_infos_ppc64le[] = {
     POWERPC_REGS

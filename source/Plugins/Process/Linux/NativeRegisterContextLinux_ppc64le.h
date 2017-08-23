@@ -119,13 +119,13 @@ private:
   };
 
   struct VReg {
-    uint8_t bytes[16];
+    uint8_t bytes[32];
+    uint32_t vscr;
   };
 
   struct FPU {
     VReg v[32];
     uint32_t fpsr;
-    uint32_t fpcr;
   };
 
   uint64_t m_gpr_ppc64le[k_num_gpr_registers_ppc64le]; // 64-bit general purpose
