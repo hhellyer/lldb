@@ -51,7 +51,8 @@ static const uint32_t g_gpr_regnums_ppc64le[] = {
     gpr_r24_ppc64le, gpr_r25_ppc64le, gpr_r26_ppc64le, gpr_r27_ppc64le,
     gpr_r28_ppc64le, gpr_r29_ppc64le, gpr_r30_ppc64le, gpr_r31_ppc64le,
     gpr_pc_ppc64le, gpr_msr_ppc64le, gpr_origr3_ppc64le, gpr_ctr_ppc64le,
-    gpr_lr_ppc64le, gpr_xer_ppc64le, gpr_cr_ppc64le, gpr_trap_ppc64le,
+    gpr_lr_ppc64le, gpr_xer_ppc64le, gpr_cr_ppc64le, gpr_softe_ppc64le,
+    gpr_trap_ppc64le,
 };
 
 static const uint32_t g_fpr_regnums_ppc64le[] = {
@@ -75,7 +76,7 @@ static const uint32_t g_vmx_regnums_ppc64le[] = {
     vmx_v20_ppc64le,    vmx_v21_ppc64le,  vmx_v22_ppc64le, vmx_v23_ppc64le,
     vmx_v24_ppc64le,    vmx_v25_ppc64le,  vmx_v26_ppc64le, vmx_v27_ppc64le,
     vmx_v28_ppc64le,    vmx_v29_ppc64le,  vmx_v30_ppc64le, vmx_v31_ppc64le,
-    vmx_vscr_ppc64le,
+    vmx_vscr_ppc64le,   vmx_vrsave_ppc64le,
 };
 
 namespace {

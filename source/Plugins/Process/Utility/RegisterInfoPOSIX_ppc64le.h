@@ -25,8 +25,7 @@ public:
   };
 
   struct VReg {
-    uint8_t bytes[32];
-    uint32_t vscr;
+    uint8_t bytes[16];
   };
 
   struct FPU {
