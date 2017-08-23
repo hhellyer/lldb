@@ -844,7 +844,7 @@ Status NativeRegisterContextLinux_ppc64le::DoReadRegisterValue(
   if (offset > sizeof(elf_gregset_t)) {
     uintptr_t offset = offset - sizeof(elf_gregset_t);
 
-    if (offset > sizeof(elf_fpregset_t)) {
+    if (offset > PT_FPSCR) {
       error.SetErrorString("invalid offset value");
       return error;
     }
@@ -859,7 +859,7 @@ Status NativeRegisterContextLinux_ppc64le::DoReadRegisterValue(
       ArchSpec arch;
       if (m_thread.GetProcess()->GetArchitecture(arch))
         value.SetBytes((void *) (((unsigned char *) (regs)) + offset),
-              8, arch.GetByteOrder());
+              size, arch.GetByteOrder());
       else
         error.SetErrorString("failed to get architecture");
     }

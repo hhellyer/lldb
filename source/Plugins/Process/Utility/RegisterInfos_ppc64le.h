@@ -128,7 +128,19 @@
       DEFINE_FPR(f29, NULL, LLDB_INVALID_REGNUM),                              \
       DEFINE_FPR(f30, NULL, LLDB_INVALID_REGNUM),                              \
       DEFINE_FPR(f31, NULL, LLDB_INVALID_REGNUM),                              \
-      DEFINE_FPR(fpscr, "fpscr", LLDB_INVALID_REGNUM),                         \
+      {"fpscr",                                                                \
+       NULL,                                                                   \
+       8,                                                                      \
+       FPR_OFFSET(fpscr),                                                      \
+       lldb::eEncodingUint,                                                    \
+       lldb::eFormatHex,                                                       \
+       {ppc64le_dwarf::dwarf_fpscr_ppc64le,                                    \
+        ppc64le_dwarf::dwarf_fpscr_ppc64le, LLDB_INVALID_REGNUM,               \
+        LLDB_INVALID_REGNUM, fpr_fpscr_ppc64le},                               \
+       NULL,                                                                   \
+       NULL,                                                                   \
+       NULL,                                                                   \
+       0},                                                                     \
       DEFINE_VMX(v0, LLDB_INVALID_REGNUM),                                     \
       DEFINE_VMX(v1, LLDB_INVALID_REGNUM),                                     \
       DEFINE_VMX(v2, LLDB_INVALID_REGNUM),                                     \

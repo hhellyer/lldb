@@ -31,7 +31,8 @@ public:
 
   struct FPU {
     VReg v[32];
-    uint32_t fpscr;
+    uint32_t fpsr;
+    uint32_t fpcr;
   };
 
   RegisterInfoPOSIX_ppc64le(const lldb_private::ArchSpec &target_arch);

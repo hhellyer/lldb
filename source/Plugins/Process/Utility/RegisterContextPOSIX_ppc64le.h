@@ -74,6 +74,7 @@ protected:
   struct FPU {
     VReg v[32];
     uint32_t fpsr;
+    uint32_t fpcr;
   };
 
   // 64-bit general purpose registers.
