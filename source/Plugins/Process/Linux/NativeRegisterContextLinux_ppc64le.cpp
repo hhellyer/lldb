@@ -173,6 +173,13 @@ NativeRegisterContextLinux_ppc64le::ReadRegister(const RegisterInfo *reg_info,
     error = ReadFPR();
     if (error.Fail())
       return error;
+
+    // Get pointer to m_fpr_ppc64le variable and set the data from it.
+    uint32_t fpr_offset = CalculateFprOffset(reg_info);
+    assert(fpr_offset < sizeof m_fpr_ppc64le);
+    uint8_t *src = (uint8_t *)&m_fpr_ppc64le + fpr_offset;
+    reg_value.SetFromMemoryData(reg_info, src, reg_info->byte_size,
+                                eByteOrderLittle, error);
   } else {
     uint32_t full_reg = reg;
     bool is_subreg = reg_info->invalidate_regs &&
@@ -197,15 +204,7 @@ NativeRegisterContextLinux_ppc64le::ReadRegister(const RegisterInfo *reg_info,
       if (reg_value.GetByteSize() > reg_info->byte_size)
         reg_value.SetType(reg_info);
     }
-    return error;
   }
-
-  // Get pointer to m_fpr_ppc64le variable and set the data from it.
-  uint32_t fpr_offset = CalculateFprOffset(reg_info);
-  assert(fpr_offset < sizeof m_fpr_ppc64le);
-  uint8_t *src = (uint8_t *)&m_fpr_ppc64le + fpr_offset;
-  reg_value.SetFromMemoryData(reg_info, src, reg_info->byte_size,
-                              eByteOrderLittle, error);
 
   return error;
 }
@@ -845,7 +844,7 @@ Status NativeRegisterContextLinux_ppc64le::DoReadRegisterValue(
   if (offset > sizeof(elf_gregset_t)) {
     uintptr_t offset = offset - sizeof(elf_gregset_t);
 
-    if (offset > PT_FPSCR) {
+    if (offset > sizeof(elf_fpregset_t)) {
       error.SetErrorString("invalid offset value");
       return error;
     }
@@ -860,7 +859,7 @@ Status NativeRegisterContextLinux_ppc64le::DoReadRegisterValue(
       ArchSpec arch;
       if (m_thread.GetProcess()->GetArchitecture(arch))
         value.SetBytes((void *) (((unsigned char *) (regs)) + offset),
-              size, arch.GetByteOrder());
+              8, arch.GetByteOrder());
       else
         error.SetErrorString("failed to get architecture");
     }
@@ -889,44 +888,41 @@ Status NativeRegisterContextLinux_ppc64le::DoWriteRegisterValue(
     uint32_t offset, const char *reg_name, const RegisterValue &value) {
   Status error;
   ::pid_t tid = m_thread.GetID();
-#if 0
-  if (offset > sizeof(struct user_pt_regs)) {
-    uintptr_t offset = offset - sizeof(struct user_pt_regs);
-    if (offset > sizeof(struct user_fpsimd_state)) {
+
+  if (offset > sizeof(elf_gregset_t)) {
+    uintptr_t offset = offset - sizeof(elf_gregset_t);
+
+    if (offset > sizeof(elf_fpregset_t)) {
       error.SetErrorString("invalid offset value");
       return error;
     }
+
     elf_fpregset_t regs;
     int regset = NT_FPREGSET;
-    struct iovec ioVec;
 
-    ioVec.iov_base = &regs;
-    ioVec.iov_len = sizeof regs;
-    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, tid, &regset,
-                                              &ioVec, sizeof regs);
+    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETFPREGS, tid, &regset,
+                                              &regs, sizeof regs);
 
     if (error.Success()) {
       ::memcpy((void *)(((unsigned char *)(&regs)) + offset), value.GetBytes(),
                16);
-      error = NativeProcessLinux::PtraceWrapper(PTRACE_SETREGSET, tid, &regset,
-                                                &ioVec, sizeof regs);
+      error = NativeProcessLinux::PtraceWrapper(PTRACE_SETFPREGS, tid, &regset,
+                                                &regs, sizeof regs);
     }
   } else
-#endif
   {
     elf_gregset_t regs;
     int regset = NT_PRSTATUS;
-    struct iovec ioVec;
 
-    ioVec.iov_base = &regs;
-    ioVec.iov_len = sizeof regs;
-    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, tid, &regset,
-                                              &ioVec, sizeof regs);
+    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, tid, &regset,
+                                              &regs, sizeof regs);
+
     if (error.Success()) {
       ::memcpy((void *)(((unsigned char *)(&regs)) + offset), value.GetBytes(),
                8);
-      error = NativeProcessLinux::PtraceWrapper(PTRACE_SETREGSET, tid, &regset,
-                                                &ioVec, sizeof regs);
+
+      error = NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, tid, &regset,
+                                                &regs, sizeof regs);
     }
   }
   return error;
@@ -934,48 +930,33 @@ Status NativeRegisterContextLinux_ppc64le::DoWriteRegisterValue(
 
 Status NativeRegisterContextLinux_ppc64le::DoReadGPR(void *buf, size_t buf_size) {
   int regset = NT_PRSTATUS;
-  struct iovec ioVec;
-  Status error;
 
-  ioVec.iov_base = buf;
-  ioVec.iov_len = buf_size;
-  return NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, m_thread.GetID(),
-                                           &regset, &ioVec, buf_size);
+  return NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(),
+                                           &regset, buf, buf_size);
 }
 
 Status NativeRegisterContextLinux_ppc64le::DoWriteGPR(void *buf,
                                                     size_t buf_size) {
   int regset = NT_PRSTATUS;
-  struct iovec ioVec;
-  Status error;
 
-  ioVec.iov_base = buf;
-  ioVec.iov_len = buf_size;
-  return NativeProcessLinux::PtraceWrapper(PTRACE_SETREGSET, m_thread.GetID(),
-                                           &regset, &ioVec, buf_size);
+  return NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, m_thread.GetID(),
+                                           &regset, buf, buf_size);
 }
 
 Status NativeRegisterContextLinux_ppc64le::DoReadFPR(void *buf, size_t buf_size) {
   int regset = NT_FPREGSET;
-  struct iovec ioVec;
-  Status error;
 
-  ioVec.iov_base = buf;
-  ioVec.iov_len = buf_size;
-  return NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, m_thread.GetID(),
-                                           &regset, &ioVec, buf_size);
+  return NativeProcessLinux::PtraceWrapper(PTRACE_GETFPREGS, m_thread.GetID(),
+                                           &regset, buf, buf_size);
+
 }
 
 Status NativeRegisterContextLinux_ppc64le::DoWriteFPR(void *buf,
                                                     size_t buf_size) {
   int regset = NT_FPREGSET;
-  struct iovec ioVec;
-  Status error;
 
-  ioVec.iov_base = buf;
-  ioVec.iov_len = buf_size;
-  return NativeProcessLinux::PtraceWrapper(PTRACE_SETREGSET, m_thread.GetID(),
-                                           &regset, &ioVec, buf_size);
+  return NativeProcessLinux::PtraceWrapper(PTRACE_SETFPREGS, m_thread.GetID(),
+                                           &regset, buf, buf_size);
 }
 
 uint32_t NativeRegisterContextLinux_ppc64le::CalculateFprOffset(

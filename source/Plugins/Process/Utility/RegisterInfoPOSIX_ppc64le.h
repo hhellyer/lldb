@@ -18,10 +18,14 @@ class RegisterInfoPOSIX_ppc64le : public lldb_private::RegisterInfoInterface {
 public:
   struct GPR {
     uint64_t r[32]; // r0-r32
-    uint64_t lr;
-    uint64_t cr;
+    uint64_t msr;
+    uint64_t origr3;
     uint64_t ctr;
+    uint64_t lr;
     uint64_t xer;
+    uint64_t cr;
+    uint64_t softe;
+    uint64_t trap;
   };
 
   struct VReg {
@@ -30,8 +34,7 @@ public:
 
   struct FPU {
     VReg v[32];
-    uint32_t fpsr;
-    uint32_t fpcr;
+    uint64_t fpscr;
   };
 
   RegisterInfoPOSIX_ppc64le(const lldb_private::ArchSpec &target_arch);
