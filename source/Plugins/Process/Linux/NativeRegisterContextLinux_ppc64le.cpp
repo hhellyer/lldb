@@ -872,6 +872,8 @@ NativeRegisterContextLinux_ppc64le::GetWatchpointHitAddress(uint32_t wp_index) {
 }
 
 Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
+
+  // CHECKPOINT
 #if 0
   if (!m_refresh_hwdebug_info) {
     return Status();
@@ -880,6 +882,33 @@ Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
   ::pid_t tid = m_thread.GetID();
 
   int regset = NT_ARM_HW_WATCH;
+  struct ppc_hw_breakpoint dreg_state;
+  Status error;
+
+  error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, tid, &regset,
+                                            &dreg_state, sizeof(dreg_state));
+
+  if (error.Fail())
+    return error;
+
+  // O que seria exatamente dbg_info e essa máscara 0xff???
+  // Numero maximo de hardware WPs suportados? PPC tem apenas 1
+  // m_max_hwp_supported = dreg_state.dbg_info & 0xff;
+
+  regset = NT_ARM_HW_BREAK;
+  error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, tid, &regset,
+                                            &dreg_state, sizeof(dreg_state));
+
+  if (error.Fail())
+    return error;
+
+  // Apenas 1 HW BP tbm
+  // m_max_hbp_supported = dreg_state.dbg_info & 0xff;
+  m_refresh_hwdebug_info = false;
+
+  return error;
+
+  //#if 0
   struct iovec ioVec;
   struct user_hwdebug_state dreg_state;
   Status error;
@@ -905,9 +934,11 @@ Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
   m_refresh_hwdebug_info = false;
 
   return error;
-#endif
+
+//#endif
   Status error;
   return error;
+#endif
 }
 
 Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(int hwbType) {
