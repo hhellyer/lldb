@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include <elf.h>
 #include "RegisterInfoInterface.h"
 #include "lldb-ppc64le-register-enums.h"
 #include "lldb/Target/RegisterContext.h"
@@ -69,16 +70,28 @@ protected:
   };
 
   struct VReg {
+    uint8_t bytes[8];
+  };
+
+  struct VMXReg {
     uint8_t bytes[16];
   };
 
   struct FPU {
     VReg v[32];
-    uint64_t fpscr;
+    VReg fpscr;
+  };
+
+  struct VMX {
+    VMXReg v[32];
+    VMXReg vscr;
+    VMXReg vrsave;
   };
 
   // 64-bit general purpose registers.
-  uint64_t m_gpr_ppc64le[k_num_gpr_registers_ppc64le];
+  VReg m_gpr_ppc64le[ELF_NGREG]; // 64-bit general purpose registers.
+  FPU m_fpr_ppc64le; // floating-point registers including extended register.
+  VMX m_vmx_ppc64le; // vector registers.
 
   RegInfo m_reg_info;
   struct RegisterContextPOSIX_ppc64le::FPU

@@ -15,6 +15,7 @@
 #ifndef lldb_NativeRegisterContextLinux_powerpc_h
 #define lldb_NativeRegisterContextLinux_powerpc_h
 
+#include <elf.h>
 #include "Plugins/Process/Linux/NativeRegisterContextLinux.h"
 #include "Plugins/Process/Utility/lldb-ppc64le-register-enums.h"
 
@@ -98,17 +99,32 @@ protected:
 
   Status DoWriteFPR(void *buf, size_t buf_size) override;
 
+  Status DoReadVMX(void *buf, size_t buf_size);
+
+  Status DoWriteVMX(void *buf, size_t buf_size);
+
+  bool IsVMX(unsigned reg);
+
+  Status ReadVMX();
+
+  Status WriteVMX();
+
   void *GetGPRBuffer() override { return &m_gpr_ppc64le; }
 
   void *GetFPRBuffer() override { return &m_fpr_ppc64le; }
 
+  void *GetVMXBuffer() { return &m_vmx_ppc64le; }
+
   size_t GetFPRSize() override { return sizeof(m_fpr_ppc64le); }
+
+  size_t GetVMXSize() { return sizeof(m_vmx_ppc64le); }
 
 private:
   struct RegInfo {
     uint32_t num_registers;
     uint32_t num_gpr_registers;
     uint32_t num_fpr_registers;
+    uint32_t num_vmx_registers;
 
     uint32_t last_gpr;
     uint32_t first_fpr;
@@ -121,18 +137,28 @@ private:
   };
 
   struct VReg {
+    uint8_t bytes[8];
+  };
+
+  struct VMXReg {
     uint8_t bytes[16];
   };
 
   struct FPU {
     VReg v[32];
-    uint64_t fpscr;
+    VReg fpscr;
   };
 
-  uint64_t m_gpr_ppc64le[k_num_gpr_registers_ppc64le]; // 64-bit general purpose
-                                                   // registers.
+  struct VMX {
+    VMXReg v[32];
+    VMXReg vscr;
+    VMXReg vrsave;
+  };
+
   RegInfo m_reg_info;
-  FPU m_fpr_ppc64le; // floating-point registers including extended register sets.
+  VReg m_gpr_ppc64le[ELF_NGREG]; // 64-bit general purpose registers.
+  FPU m_fpr_ppc64le; // floating-point registers including extended register.
+  VMX m_vmx_ppc64le; // vector registers.
 
   // Debug register info for hardware breakpoints and watchpoints management.
   struct DREG {
@@ -162,6 +188,8 @@ private:
   Status WriteHardwareDebugRegs(int hwbType);
 
   uint32_t CalculateFprOffset(const RegisterInfo *reg_info) const;
+
+  uint32_t CalculateVmxOffset(const RegisterInfo *reg_info) const;
 };
 
 } // namespace process_linux
