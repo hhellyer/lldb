@@ -16,6 +16,7 @@
 #define GPR_OFFSET(regname) (offsetof(GPR, regname))
 #define FPR_OFFSET(regname) (offsetof(FPR, regname))
 #define VMX_OFFSET(regname) (offsetof(VMX, regname))
+#define VSX_OFFSET(regname) (offsetof(VSX, regname))
 #define GPR_SIZE(regname) (sizeof(((GPR *)NULL)->regname))
 
 #include "Utility/PPC64LE_DWARF_Registers.h"
@@ -50,6 +51,16 @@
                                 ppc64le_dwarf::dwarf_##reg##_ppc64le,          \
                                 lldb_kind, LLDB_INVALID_REGNUM,                \
                                 vmx_##reg##_ppc64le },                         \
+                                NULL, NULL, NULL, 0                            \
+  }
+#define DEFINE_VSX(reg, lldb_kind)                                             \
+  {                                                                            \
+    #reg, NULL, 16, VSX_OFFSET(reg), lldb::eEncodingVector,                    \
+                               lldb::eFormatVectorOfUInt32,                    \
+                               {ppc64le_dwarf::dwarf_##reg##_ppc64le,          \
+                                ppc64le_dwarf::dwarf_##reg##_ppc64le,          \
+                                lldb_kind, LLDB_INVALID_REGNUM,                \
+                                vsx_##reg##_ppc64le },                         \
                                 NULL, NULL, NULL, 0                            \
   }
 
@@ -200,6 +211,70 @@
        NULL,                                                                   \
        NULL,                                                                   \
        0},                                                                     \
+      DEFINE_VSX(vs0, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs1, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs2, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs3, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs4, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs5, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs6, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs7, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs8, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs9, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VSX(vs10, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs11, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs12, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs13, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs14, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs15, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs16, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs17, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs18, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs19, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs20, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs21, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs22, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs23, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs24, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs25, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs26, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs27, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs28, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs29, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs30, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs31, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs32, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs33, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs34, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs35, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs36, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs37, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs38, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs39, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs40, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs41, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs42, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs43, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs44, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs45, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs46, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs47, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs48, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs49, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs50, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs51, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs52, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs53, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs54, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs55, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs56, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs57, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs58, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs59, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs50, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs61, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs62, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VSX(vs63, LLDB_INVALID_REGNUM),                                   \
       /* */
 
 typedef struct _GPR {
@@ -318,6 +393,75 @@ typedef struct _VMX {
   uint32_t vscr[4];
   uint32_t vrsave[4];
 } VMX;
+
+
+typedef struct _VSX {
+  uint32_t vs0[4];
+  uint32_t vs1[4];
+  uint32_t vs2[4];
+  uint32_t vs3[4];
+  uint32_t vs4[4];
+  uint32_t vs5[4];
+  uint32_t vs6[4];
+  uint32_t vs7[4];
+  uint32_t vs8[4];
+  uint32_t vs9[4];
+  uint32_t vs10[4];
+  uint32_t vs11[4];
+  uint32_t vs12[4];
+  uint32_t vs13[4];
+  uint32_t vs14[4];
+  uint32_t vs15[4];
+  uint32_t vs16[4];
+  uint32_t vs17[4];
+  uint32_t vs18[4];
+  uint32_t vs19[4];
+  uint32_t vs20[4];
+  uint32_t vs21[4];
+  uint32_t vs22[4];
+  uint32_t vs23[4];
+  uint32_t vs24[4];
+  uint32_t vs25[4];
+  uint32_t vs26[4];
+  uint32_t vs27[4];
+  uint32_t vs28[4];
+  uint32_t vs29[4];
+  uint32_t vs30[4];
+  uint32_t vs31[4];
+  uint32_t vs32[4];
+  uint32_t vs33[4];
+  uint32_t vs34[4];
+  uint32_t vs35[4];
+  uint32_t vs36[4];
+  uint32_t vs37[4];
+  uint32_t vs38[4];
+  uint32_t vs39[4];
+  uint32_t vs40[4];
+  uint32_t vs41[4];
+  uint32_t vs42[4];
+  uint32_t vs43[4];
+  uint32_t vs44[4];
+  uint32_t vs45[4];
+  uint32_t vs46[4];
+  uint32_t vs47[4];
+  uint32_t vs48[4];
+  uint32_t vs49[4];
+  uint32_t vs50[4];
+  uint32_t vs51[4];
+  uint32_t vs52[4];
+  uint32_t vs53[4];
+  uint32_t vs54[4];
+  uint32_t vs55[4];
+  uint32_t vs56[4];
+  uint32_t vs57[4];
+  uint32_t vs58[4];
+  uint32_t vs59[4];
+  uint32_t vs60[4];
+  uint32_t vs61[4];
+  uint32_t vs62[4];
+  uint32_t vs63[4];
+} VSX;
+
 static lldb_private::RegisterInfo g_register_infos_ppc64le[] = {
     POWERPC_REGS
 };

@@ -127,32 +127,40 @@ private:
     uint32_t first_vmx;
     uint32_t last_vmx;
 
+    uint32_t first_vsx;
+    uint32_t last_vsx;
+
     uint32_t gpr_flags;
   };
 
-  struct VReg {
+  struct Reg {
     uint8_t bytes[8];
   };
 
-  struct VMXReg {
+  struct VReg {
     uint8_t bytes[16];
   };
 
   struct FPU {
-    VReg v[32];
-    VReg fpscr;
+    Reg v[32];
+    Reg fpscr;
   };
 
   struct VMX {
-    VMXReg v[32];
-    VMXReg vscr;
-    VMXReg vrsave;
+    VReg v[32];
+    VReg vscr;
+    VReg vrsave;
+  };
+
+  struct VSX {
+    VReg v[64];
   };
 
   RegInfo m_reg_info;
-  VReg m_gpr_ppc64le[ELF_NGREG]; // 64-bit general purpose registers.
+  Reg m_gpr_ppc64le[ELF_NGREG]; // 64-bit general purpose registers.
   FPU m_fpr_ppc64le; // floating-point registers including extended register.
-  VMX m_vmx_ppc64le; // vector registers.
+  VMX m_vmx_ppc64le; // VMX registers.
+  VSX m_vsx_ppc64le; // VSX registers.
 
   // Debug register info for hardware breakpoints and watchpoints management.
   struct DREG {

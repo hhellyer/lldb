@@ -33,23 +33,27 @@ public:
     uint64_t pad[4];
   };
 
-  struct VReg {
+  struct Reg {
     uint8_t bytes[8];
   };
 
-  struct VMXReg {
+  struct VReg {
     uint8_t bytes[16];
   };
 
   struct FPU {
-    VReg v[32];
-    VReg fpscr;
+    Reg v[32];
+    Reg fpscr;
   };
 
   struct VMX {
-    VMXReg v[32];
-    VMXReg vscr;
-    VMXReg vrsave;
+    VReg v[32];
+    VReg vscr;
+    VReg vrsave;
+  };
+
+  struct VSX {
+    VReg v[64];
   };
 
   RegisterInfoPOSIX_ppc64le(const lldb_private::ArchSpec &target_arch);
