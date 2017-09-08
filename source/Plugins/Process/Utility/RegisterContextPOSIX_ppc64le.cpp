@@ -54,14 +54,14 @@ static const uint32_t g_fpr_regnums[] = {
 };
 
 static const uint32_t g_vmx_regnums[] = {
-    vmx_v0_ppc64le,     vmx_v1_ppc64le,   vmx_v2_ppc64le,  vmx_v3_ppc64le,
-    vmx_v4_ppc64le,     vmx_v5_ppc64le,   vmx_v6_ppc64le,  vmx_v7_ppc64le,
-    vmx_v8_ppc64le,     vmx_v9_ppc64le,   vmx_v10_ppc64le, vmx_v11_ppc64le,
-    vmx_v12_ppc64le,    vmx_v13_ppc64le,  vmx_v14_ppc64le, vmx_v15_ppc64le,
-    vmx_v16_ppc64le,    vmx_v17_ppc64le,  vmx_v18_ppc64le, vmx_v19_ppc64le,
-    vmx_v20_ppc64le,    vmx_v21_ppc64le,  vmx_v22_ppc64le, vmx_v23_ppc64le,
-    vmx_v24_ppc64le,    vmx_v25_ppc64le,  vmx_v26_ppc64le, vmx_v27_ppc64le,
-    vmx_v28_ppc64le,    vmx_v29_ppc64le,  vmx_v30_ppc64le, vmx_v31_ppc64le,
+    vmx_vr0_ppc64le,     vmx_vr1_ppc64le,   vmx_vr2_ppc64le,  vmx_vr3_ppc64le,
+    vmx_vr4_ppc64le,     vmx_vr5_ppc64le,   vmx_vr6_ppc64le,  vmx_vr7_ppc64le,
+    vmx_vr8_ppc64le,     vmx_vr9_ppc64le,   vmx_vr10_ppc64le, vmx_vr11_ppc64le,
+    vmx_vr12_ppc64le,    vmx_vr13_ppc64le,  vmx_vr14_ppc64le, vmx_vr15_ppc64le,
+    vmx_vr16_ppc64le,    vmx_vr17_ppc64le,  vmx_vr18_ppc64le, vmx_vr19_ppc64le,
+    vmx_vr20_ppc64le,    vmx_vr21_ppc64le,  vmx_vr22_ppc64le, vmx_vr23_ppc64le,
+    vmx_vr24_ppc64le,    vmx_vr25_ppc64le,  vmx_vr26_ppc64le, vmx_vr27_ppc64le,
+    vmx_vr28_ppc64le,    vmx_vr29_ppc64le,  vmx_vr30_ppc64le, vmx_vr31_ppc64le,
     vmx_vscr_ppc64le,
 };
 
@@ -88,7 +88,7 @@ bool RegisterContextPOSIX_ppc64le::IsFPR(unsigned reg) {
 }
 
 bool RegisterContextPOSIX_ppc64le::IsVMX(unsigned reg) {
-  return (m_reg_info.first_fpr_v <= reg) && (reg <= m_reg_info.last_fpr_v);
+  return (m_reg_info.first_vmx <= reg) && (reg <= m_reg_info.last_vmx);
 }
 
 RegisterContextPOSIX_ppc64le::RegisterContextPOSIX_ppc64le(

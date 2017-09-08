@@ -63,8 +63,8 @@ protected:
     uint32_t first_fpr;
     uint32_t last_fpr;
 
-    uint32_t first_fpr_v;
-    uint32_t last_fpr_v;
+    uint32_t first_vmx;
+    uint32_t last_vmx;
 
     uint32_t gpr_flags;
   };

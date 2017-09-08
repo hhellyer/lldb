@@ -85,12 +85,6 @@ public:
   enum DREGType { eDREGTypeWATCH = 0, eDREGTypeBREAK };
 
 protected:
-  Status DoReadRegisterValue(uint32_t offset, const char *reg_name,
-                             uint32_t size, RegisterValue &value) override;
-
-  Status DoWriteRegisterValue(uint32_t offset, const char *reg_name,
-                              const RegisterValue &value) override;
-
   Status DoReadGPR(void *buf, size_t buf_size) override;
 
   Status DoWriteGPR(void *buf, size_t buf_size) override;
@@ -130,8 +124,8 @@ private:
     uint32_t first_fpr;
     uint32_t last_fpr;
 
-    uint32_t first_fpr_v;
-    uint32_t last_fpr_v;
+    uint32_t first_vmx;
+    uint32_t last_vmx;
 
     uint32_t gpr_flags;
   };

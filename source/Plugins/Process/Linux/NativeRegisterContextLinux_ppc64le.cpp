@@ -68,14 +68,14 @@ static const uint32_t g_fpr_regnums_ppc64le[] = {
 };
 
 static const uint32_t g_vmx_regnums_ppc64le[] = {
-    vmx_v0_ppc64le,     vmx_v1_ppc64le,   vmx_v2_ppc64le,  vmx_v3_ppc64le,
-    vmx_v4_ppc64le,     vmx_v5_ppc64le,   vmx_v6_ppc64le,  vmx_v7_ppc64le,
-    vmx_v8_ppc64le,     vmx_v9_ppc64le,   vmx_v10_ppc64le, vmx_v11_ppc64le,
-    vmx_v12_ppc64le,    vmx_v13_ppc64le,  vmx_v14_ppc64le, vmx_v15_ppc64le,
-    vmx_v16_ppc64le,    vmx_v17_ppc64le,  vmx_v18_ppc64le, vmx_v19_ppc64le,
-    vmx_v20_ppc64le,    vmx_v21_ppc64le,  vmx_v22_ppc64le, vmx_v23_ppc64le,
-    vmx_v24_ppc64le,    vmx_v25_ppc64le,  vmx_v26_ppc64le, vmx_v27_ppc64le,
-    vmx_v28_ppc64le,    vmx_v29_ppc64le,  vmx_v30_ppc64le, vmx_v31_ppc64le,
+    vmx_vr0_ppc64le,     vmx_vr1_ppc64le,   vmx_vr2_ppc64le,  vmx_vr3_ppc64le,
+    vmx_vr4_ppc64le,     vmx_vr5_ppc64le,   vmx_vr6_ppc64le,  vmx_vr7_ppc64le,
+    vmx_vr8_ppc64le,     vmx_vr9_ppc64le,   vmx_vr10_ppc64le, vmx_vr11_ppc64le,
+    vmx_vr12_ppc64le,    vmx_vr13_ppc64le,  vmx_vr14_ppc64le, vmx_vr15_ppc64le,
+    vmx_vr16_ppc64le,    vmx_vr17_ppc64le,  vmx_vr18_ppc64le, vmx_vr19_ppc64le,
+    vmx_vr20_ppc64le,    vmx_vr21_ppc64le,  vmx_vr22_ppc64le, vmx_vr23_ppc64le,
+    vmx_vr24_ppc64le,    vmx_vr25_ppc64le,  vmx_vr26_ppc64le, vmx_vr27_ppc64le,
+    vmx_vr28_ppc64le,    vmx_vr29_ppc64le,  vmx_vr30_ppc64le, vmx_vr31_ppc64le,
     vmx_vscr_ppc64le,   vmx_vrsave_ppc64le,
 };
 
@@ -120,8 +120,8 @@ NativeRegisterContextLinux_ppc64le::NativeRegisterContextLinux_ppc64le(
     m_reg_info.last_gpr = k_last_gpr_ppc64le;
     m_reg_info.first_fpr = k_first_fpr_ppc64le;
     m_reg_info.last_fpr = k_last_fpr_ppc64le;
-    m_reg_info.first_fpr_v = vmx_v0_ppc64le;
-    m_reg_info.last_fpr_v = vmx_vscr_ppc64le;
+    m_reg_info.first_vmx = k_first_vmx_ppc64le;
+    m_reg_info.last_vmx = k_last_vmx_ppc64le;
     break;
   default:
     llvm_unreachable("Unhandled target architecture.");
@@ -169,19 +169,7 @@ Status NativeRegisterContextLinux_ppc64le::ReadRegister(
   }
 
   const uint32_t reg = reg_info->kinds[lldb::eRegisterKindLLDB];
-  uint32_t offset;
 
-  if (IsFPR(reg)) {
-    offset = GetGPRSize() + CalculateFprOffset(reg_info);
-  } else if (IsVMX(reg)) {
-    offset = GetGPRSize() + GetFPRSize() + CalculateVmxOffset(reg_info);
-  } else {
-    offset = reg_info->byte_offset;
-  }
-
-  error = DoReadRegisterValue(offset, reg_info->name,
-                              reg_info->byte_size, reg_value);
-  /*
   if (IsFPR(reg)) {
     error = ReadFPR();
     if (error.Fail())
@@ -205,30 +193,14 @@ Status NativeRegisterContextLinux_ppc64le::ReadRegister(
     reg_value.SetFromMemoryData(reg_info, src, reg_info->byte_size,
                                 eByteOrderLittle, error);
   } else {
-    uint32_t full_reg = reg;
-    bool is_subreg = reg_info->invalidate_regs &&
-                     (reg_info->invalidate_regs[0] != LLDB_INVALID_REGNUM);
+    error = ReadGPR();
+    if (error.Fail())
+      return error;
 
-    if (is_subreg) {
-      // Read the full aligned 64-bit register.
-      full_reg = reg_info->invalidate_regs[0];
-    }
-
-    error = ReadRegisterRaw(full_reg, reg_value);
-
-    if (error.Success()) {
-      // If our read was not aligned (for ah,bh,ch,dh), shift our returned value
-      // one byte to the right.
-      if (is_subreg && (reg_info->byte_offset & 0x1))
-        reg_value.SetUInt64(reg_value.GetAsUInt64() >> 8);
-
-      // If our return byte size was greater than the return value reg size,
-      // then
-      // use the type specified by reg_info rather than the uint64_t default
-      if (reg_value.GetByteSize() > reg_info->byte_size)
-        reg_value.SetType(reg_info);
-    }
-  }*/
+    uint8_t *src = (uint8_t *) &m_gpr_ppc64le + reg_info->byte_offset;
+    reg_value.SetFromMemoryData(reg_info, src, reg_info->byte_size,
+                                eByteOrderLittle, error);
+  }
 
   return error;
 }
@@ -246,45 +218,51 @@ Status NativeRegisterContextLinux_ppc64le::WriteRegister(
                                                : "<unknown register>");
 
   if (IsGPR(reg_index))
-    return WriteRegisterRaw(reg_index, reg_value);
+  {
+      error = ReadGPR();
+      if (error.Fail())
+        return error;
 
-  if (IsFPR(reg_index) || IsVMX(reg_index))
+      uint8_t *dst = (uint8_t *) &m_gpr_ppc64le + reg_info->byte_offset;
+      ::memcpy(dst, reg_value.GetBytes(), reg_value.GetByteSize());
+
+      error = WriteGPR();
+      if (error.Fail())
+        return error;
+
+      return Status();
+  }
+
+  if (IsFPR(reg_index))
   {
       error = ReadFPR();
       if (error.Fail())
         return error;
 
-      error = ReadVMX();
-      if (error.Fail())
-        return error;
-
-      if (IsFPR(reg_index)) {
-        // Get pointer to m_fpr_ppc64le variable and set the data to it.
-        uint32_t fpr_offset = CalculateFprOffset(reg_info);
-        assert(fpr_offset < GetFPRSize());
-        uint8_t *dst = (uint8_t *) &m_fpr_ppc64le + fpr_offset;
-        *(uint64_t *) dst = reg_value.GetAsUInt64();
-        dst = (uint8_t *) &m_vmx_ppc64le + fpr_offset * 2;
-        ::memcpy(dst, reg_value.GetBytes(), 8);
-      }
-
-      if (IsVMX(reg_index)) {
-        // Get pointer to m_vmx_ppc64le variable and set the data to it.
-        uint32_t vmx_offset = CalculateVmxOffset(reg_info);
-        assert(vmx_offset < GetVMXSize());
-        uint8_t *dst = (uint8_t *)&m_vmx_ppc64le + vmx_offset;
-        ::memcpy(dst, reg_value.GetBytes(), 16);
-
-        if (vmx_offset / 16 < 32)
-        {
-            dst = (uint8_t *)&m_vmx_ppc64le + vmx_offset / 2;
-            ::memcpy(dst, reg_value.GetBytes(), 8);
-        }
-      }
+      // Get pointer to m_fpr_ppc64le variable and set the data to it.
+      uint32_t fpr_offset = CalculateFprOffset(reg_info);
+      assert(fpr_offset < GetFPRSize());
+      uint8_t *dst = (uint8_t *) &m_fpr_ppc64le + fpr_offset;
+      ::memcpy(dst, reg_value.GetBytes(), reg_value.GetByteSize());
 
       error = WriteFPR();
       if (error.Fail())
         return error;
+
+      return Status();
+  }
+
+  if (IsVMX(reg_index))
+  {
+      error = ReadVMX();
+      if (error.Fail())
+        return error;
+
+      // Get pointer to m_vmx_ppc64le variable and set the data to it.
+      uint32_t vmx_offset = CalculateVmxOffset(reg_info);
+      assert(vmx_offset < GetVMXSize());
+      uint8_t *dst = (uint8_t *)&m_vmx_ppc64le + vmx_offset;
+      ::memcpy(dst, reg_value.GetBytes(), reg_value.GetByteSize());
 
       error = WriteVMX();
       if (error.Fail())
@@ -717,7 +695,7 @@ Status NativeRegisterContextLinux_ppc64le::ClearAllHardwareWatchpoints() {
     if (m_hwp_regs[i].control & 0x01) {
       // Create a backup we can revert to in case of failure.
       tempAddr = m_hwp_regs[i].address;
-      tempControl = m_hwp_regs[i].control;
+      tempControl = m_hwp_regs[i].control;        // Get pointer to m_vmx_ppc64le variable and set the data to it.
 
       // Clear watchpoints in local cache
       m_hwp_regs[i].control &= ~1;
@@ -892,128 +870,6 @@ Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(int hwbType) {
   return error;
 }
 
-Status NativeRegisterContextLinux_ppc64le::DoReadRegisterValue(
-    uint32_t offset, const char *reg_name, uint32_t size,
-    RegisterValue &value) {
-  Status error;
-  if (offset >= (GetGPRSize() + GetFPRSize())) {
-    // Register is VMX.
-
-    uintptr_t vmx_offset = offset -GetGPRSize() -GetFPRSize();
-    elf_vrregset_t regs;
-    int regset = 0;
-
-    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETVSRREGS, m_thread.GetID(), \
-                                              &regset, &regs, sizeof regs);
-    if (error.Success()) {
-      ArchSpec arch;
-      if (m_thread.GetProcess()->GetArchitecture(arch))
-        value.SetBytes((void *) (((unsigned char *) (regs)) + vmx_offset),
-                                 16, arch.GetByteOrder());
-      else
-        error.SetErrorString("failed to get architecture");
-    } else {
-      return error;
-    }
-  } else if (offset >= GetGPRSize()) {
-    // Register is FPR.
-
-    uintptr_t fpr_offset = offset - GetGPRSize();
-    elf_fpregset_t regs;
-    int regset = NT_FPREGSET;
-
-    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETFPREGS, m_thread.GetID(), \
-                                              &regset, &regs, sizeof regs);
-    if (error.Success()) {
-      ArchSpec arch;
-      if (m_thread.GetProcess()->GetArchitecture(arch))
-        value.SetBytes((void *) (((unsigned char *) (regs)) + fpr_offset),
-                                 8, arch.GetByteOrder());
-      else
-         error.SetErrorString("failed to get architecture");
-    } else {
-      return error;
-    }
-  } else {
-    // Register is GPR.
-    elf_gregset_t regs;
-    int regset = NT_PRSTATUS;
-
-    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS,
-            m_thread.GetID(), &regset, &regs, sizeof regs);
-
-    if (error.Success()) {
-        ArchSpec arch;
-        if (m_thread.GetProcess()->GetArchitecture(arch))
-            value.SetBytes((void *) (((unsigned char *) (regs)) + offset),
-                    8, arch.GetByteOrder());
-        else
-            error.SetErrorString("failed to get architecture");
-    }
-  }
-
-  return error;
-}
-
-Status NativeRegisterContextLinux_ppc64le::DoWriteRegisterValue(
-    uint32_t offset, const char *reg_name, const RegisterValue &value) {
-  Status error;
-  ::pid_t tid = m_thread.GetID();
-
-  if (offset >= (GetGPRSize() + GetFPRSize())) {
-    // Register is VMX.
-
-    uintptr_t vmx_offset = offset -GetGPRSize() -GetFPRSize();
-    elf_vrregset_t regs;
-    int regset = 0;
-
-    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETVSRREGS, tid, &regset,
-                                              &regs, sizeof regs);
-
-    if (error.Success()) {
-      ::memcpy((void *)(((unsigned char *)(&regs)) + vmx_offset), value.GetBytes(),
-               16);
-      error = NativeProcessLinux::PtraceWrapper(PTRACE_SETVSRREGS, tid, &regset,
-                                                &regs, sizeof regs);
-    }
-  } else if (offset >= GetGPRSize()) {
-    // Register is FPR.
-
-    uintptr_t fpr_offset = offset - GetGPRSize();
-
-    elf_fpregset_t regs;
-    int regset = NT_FPREGSET;
-
-    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETFPREGS, tid, &regset,
-                                              &regs, sizeof regs);
-
-    if (error.Success()) {
-      ::memcpy((void *)(((unsigned char *)(&regs)) + fpr_offset), value.GetBytes(),
-               8);
-      error = NativeProcessLinux::PtraceWrapper(PTRACE_SETFPREGS, tid, &regset,
-                                                &regs, sizeof regs);
-    }
-  } else {
-    // Register is GPR.
-
-    elf_gregset_t regs;
-    int regset = NT_PRSTATUS;
-
-    error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, tid, &regset,
-                                              &regs, sizeof regs);
-
-    if (error.Success()) {
-      ::memcpy((void *)(((unsigned char *)(&regs)) + offset), value.GetBytes(),
-               8);
-
-      error = NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, tid, &regset,
-                                                &regs, sizeof regs);
-    }
-  }
-
-  return error;
-}
-
 Status NativeRegisterContextLinux_ppc64le::DoReadGPR(void *buf, size_t buf_size) {
   int regset = NT_PRSTATUS;
 
@@ -1054,13 +910,13 @@ uint32_t NativeRegisterContextLinux_ppc64le::CalculateFprOffset(
 uint32_t NativeRegisterContextLinux_ppc64le::CalculateVmxOffset(
     const RegisterInfo *reg_info) const {
   return reg_info->byte_offset -
-         GetRegisterInfoAtIndex(m_reg_info.first_fpr_v)->byte_offset;
+         GetRegisterInfoAtIndex(m_reg_info.first_vmx)->byte_offset;
 }
 
 Status NativeRegisterContextLinux_ppc64le::DoReadVMX(void *buf, size_t buf_size) {
   int regset = 0;
 
-  return NativeProcessLinux::PtraceWrapper(PTRACE_GETVSRREGS, m_thread.GetID(),
+  return NativeProcessLinux::PtraceWrapper(PTRACE_GETVRREGS, m_thread.GetID(),
                                            &regset, buf, buf_size);
 
 }
@@ -1069,7 +925,7 @@ Status NativeRegisterContextLinux_ppc64le::DoWriteVMX(void *buf,
                                                     size_t buf_size) {
   int regset = 0;
 
-  return NativeProcessLinux::PtraceWrapper(PTRACE_SETVSRREGS, m_thread.GetID(),
+  return NativeProcessLinux::PtraceWrapper(PTRACE_SETVRREGS, m_thread.GetID(),
                                            &regset, buf, buf_size);
 }
 

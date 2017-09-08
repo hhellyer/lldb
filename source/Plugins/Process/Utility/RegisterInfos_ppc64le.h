@@ -142,38 +142,38 @@
        NULL,                                                                   \
        NULL,                                                                   \
        0},                                                                     \
-      DEFINE_VMX(v0, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v1, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v2, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v3, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v4, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v5, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v6, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v7, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v8, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v9, LLDB_INVALID_REGNUM),                                     \
-      DEFINE_VMX(v10, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v11, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v12, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v13, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v14, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v15, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v16, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v17, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v18, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v19, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v20, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v21, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v22, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v23, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v24, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v25, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v26, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v27, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v28, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v29, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v30, LLDB_INVALID_REGNUM),                                    \
-      DEFINE_VMX(v31, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr0, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr1, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr2, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr3, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr4, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr5, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr6, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr7, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr8, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr9, LLDB_INVALID_REGNUM),                                    \
+      DEFINE_VMX(vr10, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr11, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr12, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr13, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr14, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr15, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr16, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr17, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr18, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr19, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr20, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr21, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr22, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr23, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr24, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr25, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr26, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr27, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr28, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr29, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr30, LLDB_INVALID_REGNUM),                                   \
+      DEFINE_VMX(vr31, LLDB_INVALID_REGNUM),                                   \
       {"vscr",                                                                 \
        NULL,                                                                   \
        4,                                                                      \
@@ -283,38 +283,38 @@ typedef struct _FPR {
 } FPR;
 
 typedef struct _VMX {
-  uint32_t v0[4];
-  uint32_t v1[4];
-  uint32_t v2[4];
-  uint32_t v3[4];
-  uint32_t v4[4];
-  uint32_t v5[4];
-  uint32_t v6[4];
-  uint32_t v7[4];
-  uint32_t v8[4];
-  uint32_t v9[4];
-  uint32_t v10[4];
-  uint32_t v11[4];
-  uint32_t v12[4];
-  uint32_t v13[4];
-  uint32_t v14[4];
-  uint32_t v15[4];
-  uint32_t v16[4];
-  uint32_t v17[4];
-  uint32_t v18[4];
-  uint32_t v19[4];
-  uint32_t v20[4];
-  uint32_t v21[4];
-  uint32_t v22[4];
-  uint32_t v23[4];
-  uint32_t v24[4];
-  uint32_t v25[4];
-  uint32_t v26[4];
-  uint32_t v27[4];
-  uint32_t v28[4];
-  uint32_t v29[4];
-  uint32_t v30[4];
-  uint32_t v31[4];
+  uint32_t vr0[4];
+  uint32_t vr1[4];
+  uint32_t vr2[4];
+  uint32_t vr3[4];
+  uint32_t vr4[4];
+  uint32_t vr5[4];
+  uint32_t vr6[4];
+  uint32_t vr7[4];
+  uint32_t vr8[4];
+  uint32_t vr9[4];
+  uint32_t vr10[4];
+  uint32_t vr11[4];
+  uint32_t vr12[4];
+  uint32_t vr13[4];
+  uint32_t vr14[4];
+  uint32_t vr15[4];
+  uint32_t vr16[4];
+  uint32_t vr17[4];
+  uint32_t vr18[4];
+  uint32_t vr19[4];
+  uint32_t vr20[4];
+  uint32_t vr21[4];
+  uint32_t vr22[4];
+  uint32_t vr23[4];
+  uint32_t vr24[4];
+  uint32_t vr25[4];
+  uint32_t vr26[4];
+  uint32_t vr27[4];
+  uint32_t vr28[4];
+  uint32_t vr29[4];
+  uint32_t vr30[4];
+  uint32_t vr31[4];
   uint32_t vscr[4];
   uint32_t vrsave[4];
 } VMX;
