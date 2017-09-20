@@ -473,5 +473,7 @@ static_assert((sizeof(g_register_infos_ppc64le) /
 
 #undef DEFINE_FPR
 #undef DEFINE_GPR
+#undef DEFINE_VMX
+#undef DEFINE_VSX
 
 #endif // DECLARE_REGISTER_INFOS_PPC64LE_STRUCT

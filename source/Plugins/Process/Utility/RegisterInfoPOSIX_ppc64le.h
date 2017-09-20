@@ -49,11 +49,11 @@ public:
   struct VMX {
     VReg v[32];
     VReg vscr;
-    VReg vrsave;
+    Reg vrsave;
   };
 
   struct VSX {
-    VReg v[64];
+    Reg v[32];
   };
 
   RegisterInfoPOSIX_ppc64le(const lldb_private::ArchSpec &target_arch);

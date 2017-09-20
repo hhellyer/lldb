@@ -58,6 +58,8 @@ protected:
     uint32_t num_registers;
     uint32_t num_gpr_registers;
     uint32_t num_fpr_registers;
+    uint32_t num_vmx_registers;
+    uint32_t num_vsx_registers;
 
     uint32_t last_gpr;
     uint32_t first_fpr;
@@ -92,7 +94,7 @@ protected:
   };
 
   struct VSX {
-    VReg v[64];
+    Reg v[32];
   };
 
   // 64-bit general purpose registers.
@@ -119,14 +121,18 @@ protected:
 
   bool IsVMX(unsigned reg);
 
+  bool IsVSX(unsigned reg);
+
   lldb::ByteOrder GetByteOrder();
 
   virtual bool ReadGPR() = 0;
   virtual bool ReadFPR() = 0;
   virtual bool ReadVMX() = 0;
+  virtual bool ReadVSX() = 0;
   virtual bool WriteGPR() = 0;
   virtual bool WriteFPR() = 0;
   virtual bool WriteVMX() = 0;
+  virtual bool WriteVSX() = 0;
 };
 
 #endif // liblldb_RegisterContextPOSIX_powerpc_h_

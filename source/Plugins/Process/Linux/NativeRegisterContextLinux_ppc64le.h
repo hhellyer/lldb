@@ -97,11 +97,21 @@ protected:
 
   Status DoWriteVMX(void *buf, size_t buf_size);
 
+  Status DoReadVSX(void *buf, size_t buf_size);
+
+  Status DoWriteVSX(void *buf, size_t buf_size);
+
   bool IsVMX(unsigned reg);
+
+  bool IsVSX(unsigned reg);
 
   Status ReadVMX();
 
   Status WriteVMX();
+
+  Status ReadVSX();
+
+  Status WriteVSX();
 
   void *GetGPRBuffer() override { return &m_gpr_ppc64le; }
 
@@ -109,9 +119,13 @@ protected:
 
   void *GetVMXBuffer() { return &m_vmx_ppc64le; }
 
+  void *GetVSXBuffer() { return &m_vsx_ppc64le; }
+
   size_t GetFPRSize() override { return sizeof(m_fpr_ppc64le); }
 
   size_t GetVMXSize() { return sizeof(m_vmx_ppc64le); }
+
+  size_t GetVSXSize() { return sizeof(m_vsx_ppc64le); }
 
 private:
   struct RegInfo {
@@ -119,6 +133,7 @@ private:
     uint32_t num_gpr_registers;
     uint32_t num_fpr_registers;
     uint32_t num_vmx_registers;
+    uint32_t num_vsx_registers;
 
     uint32_t last_gpr;
     uint32_t first_fpr;
@@ -153,14 +168,14 @@ private:
   };
 
   struct VSX {
-    VReg v[64];
+    Reg v[32];
   };
 
   RegInfo m_reg_info;
   Reg m_gpr_ppc64le[ELF_NGREG]; // 64-bit general purpose registers.
   FPU m_fpr_ppc64le; // floating-point registers including extended register.
   VMX m_vmx_ppc64le; // VMX registers.
-  VSX m_vsx_ppc64le; // VSX registers.
+  VSX m_vsx_ppc64le; // Last lower bytes from first VSX registers.
 
   // Debug register info for hardware breakpoints and watchpoints management.
   struct DREG {
@@ -185,6 +200,8 @@ private:
 
   bool IsVMX(unsigned reg) const;
 
+  bool IsVSX(unsigned reg) const;
+
   Status ReadHardwareDebugInfo();
 
   Status WriteHardwareDebugRegs(int hwbType);
@@ -192,6 +209,8 @@ private:
   uint32_t CalculateFprOffset(const RegisterInfo *reg_info) const;
 
   uint32_t CalculateVmxOffset(const RegisterInfo *reg_info) const;
+
+  uint32_t CalculateVsxOffset(const RegisterInfo *reg_info) const;
 };
 
 } // namespace process_linux

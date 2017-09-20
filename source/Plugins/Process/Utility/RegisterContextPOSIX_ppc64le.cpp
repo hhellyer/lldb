@@ -112,6 +112,10 @@ bool RegisterContextPOSIX_ppc64le::IsVMX(unsigned reg) {
   return (m_reg_info.first_vmx <= reg) && (reg <= m_reg_info.last_vmx);
 }
 
+bool RegisterContextPOSIX_ppc64le::IsVSX(unsigned reg) {
+  return (m_reg_info.first_vsx <= reg) && (reg <= m_reg_info.last_vsx);
+}
+
 RegisterContextPOSIX_ppc64le::RegisterContextPOSIX_ppc64le(
     Thread &thread, uint32_t concrete_frame_idx,
     RegisterInfoInterface *register_info)
