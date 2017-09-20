@@ -384,59 +384,59 @@ Status NativeRegisterContextLinux_ppc64le::ReadAllRegisterValues(
 
 Status NativeRegisterContextLinux_ppc64le::WriteAllRegisterValues(
     const lldb::DataBufferSP &data_sp) {
-    Status error;
+  Status error;
 
-     if (!data_sp) {
-       error.SetErrorStringWithFormat(
-           "NativeRegisterContextLinux_x86_64::%s invalid data_sp provided",
-           __FUNCTION__);
-       return error;
-     }
+  if (!data_sp) {
+    error.SetErrorStringWithFormat(
+        "NativeRegisterContextLinux_x86_64::%s invalid data_sp provided",
+        __FUNCTION__);
+    return error;
+  }
 
-     if (data_sp->GetByteSize() != REG_CONTEXT_SIZE) {
-       error.SetErrorStringWithFormat(
-           "NativeRegisterContextLinux_x86_64::%s data_sp contained mismatched "
-           "data size, expected %" PRIu64 ", actual %" PRIu64,
-           __FUNCTION__, REG_CONTEXT_SIZE, data_sp->GetByteSize());
-       return error;
-     }
+  if (data_sp->GetByteSize() != REG_CONTEXT_SIZE) {
+    error.SetErrorStringWithFormat(
+        "NativeRegisterContextLinux_x86_64::%s data_sp contained mismatched "
+        "data size, expected %" PRIu64 ", actual %" PRIu64,
+        __FUNCTION__, REG_CONTEXT_SIZE, data_sp->GetByteSize());
+    return error;
+  }
 
-     uint8_t *src = data_sp->GetBytes();
-     if (src == nullptr) {
-       error.SetErrorStringWithFormat("NativeRegisterContextLinux_x86_64::%s "
-                                      "DataBuffer::GetBytes() returned a null "
-                                      "pointer",
-                                      __FUNCTION__);
-       return error;
-     }
-     ::memcpy(&m_gpr_ppc64le, src, GetGPRSize());
+  uint8_t *src = data_sp->GetBytes();
+  if (src == nullptr) {
+    error.SetErrorStringWithFormat("NativeRegisterContextLinux_x86_64::%s "
+                                   "DataBuffer::GetBytes() returned a null "
+                                   "pointer",
+                                   __FUNCTION__);
+    return error;
+  }
 
-     error = WriteGPR();
-     if (error.Fail())
-       return error;
+  ::memcpy(&m_gpr_ppc64le, src, GetGPRSize());
+  error = WriteGPR();
+  if (error.Fail())
+    return error;
 
-     src += GetGPRSize();
-     ::memcpy(&m_fpr_ppc64le, src, GetFPRSize());
+  src += GetGPRSize();
+  ::memcpy(&m_fpr_ppc64le, src, GetFPRSize());
 
-     error = WriteFPR();
-     if (error.Fail())
-       return error;
+  error = WriteFPR();
+  if (error.Fail())
+    return error;
 
-     src += GetFPRSize();
-     ::memcpy(&m_vmx_ppc64le, src, GetVMXSize());
+  src += GetFPRSize();
+  ::memcpy(&m_vmx_ppc64le, src, GetVMXSize());
 
-     error = WriteVMX();
-     if (error.Fail())
-       return error;
+  error = WriteVMX();
+  if (error.Fail())
+    return error;
 
-     src += GetVMXSize();
-     ::memcpy(&m_vsx_ppc64le, src, GetVSXSize());
+  src += GetVMXSize();
+  ::memcpy(&m_vsx_ppc64le, src, GetVSXSize());
 
-      error = WriteVSX();
-      if (error.Fail())
-        return error;
-
+   error = WriteVSX();
+   if (error.Fail())
      return error;
+
+  return error;
 }
 
 bool NativeRegisterContextLinux_ppc64le::IsGPR(unsigned reg) const {
