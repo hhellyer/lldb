@@ -895,7 +895,7 @@ Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
   return error;
 }
 
-Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(uint32_t addr) {
+Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(lldb::addr_t addr) {
   struct ppc_hw_breakpoint reg_state;
   Status error;
 
