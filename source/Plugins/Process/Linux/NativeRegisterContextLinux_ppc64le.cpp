@@ -160,8 +160,8 @@ NativeRegisterContextLinux_ppc64le::NativeRegisterContextLinux_ppc64le(
   ::memset(&m_hbr_regs, 0, sizeof(m_hbr_regs));
 
   // 16 is just a maximum value, query hardware for actual watchpoint count
-  m_max_hwp_supported = 1;
-  m_max_hbp_supported = 0;
+  m_max_hwp_supported = 16;
+  m_max_hbp_supported = 16;
   m_refresh_hwdebug_info = true;
 }
 
@@ -888,21 +888,25 @@ Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
   if (error.Fail())
     return error;
 
-  m_max_hwp_supported = m_max_hwp_supported & 0xff;
+  m_max_hwp_supported = hwdebug_info.num_data_bps;
+  m_max_hbp_supported = hwdebug_info.num_instruction_bps;
   m_refresh_hwdebug_info = false;
 
   return error;
 }
 
-Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(lldb::addr_t addr) {
+Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(uint32_t addr) {
   struct ppc_hw_breakpoint reg_state;
   Status error;
+
+  for (uint32_t i = 0; i < m_max_hwp_supported; i++) {
+    reg_state.addr = m_hwp_regs[i].address;
+  }
 
   reg_state.version = 1;
   reg_state.trigger_type = PPC_BREAKPOINT_TRIGGER_WRITE;
   reg_state.addr_mode = PPC_BREAKPOINT_MODE_EXACT;
   reg_state.condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
-  reg_state.addr = (uint64_t) addr;
   reg_state.addr2 = 0;
   reg_state.condition_value = 0;
 
