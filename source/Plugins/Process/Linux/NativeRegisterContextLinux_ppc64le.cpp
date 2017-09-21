@@ -711,7 +711,7 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
   m_hwp_regs[wp_index].control = control_value;
 
   // PTRACE call to set corresponding watchpoint register.
-  error = WriteHardwareDebugRegs(control_value);
+  error = WriteHardwareDebugRegs(addr);
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].address = 0;
@@ -746,7 +746,7 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
   m_hwp_regs[wp_index].address = 0;
 
   // Ptrace call to update hardware debug registers
-  error = WriteHardwareDebugRegs(eDREGTypeWATCH);
+  error = WriteHardwareDebugRegs(m_hwp_regs[wp_index].address);
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].control = tempControl;
@@ -873,66 +873,43 @@ NativeRegisterContextLinux_ppc64le::GetWatchpointHitAddress(uint32_t wp_index) {
 }
 
 Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
-  // CHECKPOINT
   if (!m_refresh_hwdebug_info) {
     return Status();
   }
 
   ::pid_t tid = m_thread.GetID();
 
-  //int regset = NT_ARM_HW_WATCH;
-  struct ppc_hw_breakpoint reg_state;
+  struct ppc_debug_info hwdebug_info;
   Status error;
 
   error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_GETHWDBGINFO, tid, 0,
-                                            &reg_state, sizeof(reg_state));
+                                            &hwdebug_info, sizeof(hwdebug_info));
 
   if (error.Fail())
     return error;
 
   m_max_hwp_supported = m_max_hwp_supported & 0xff;
-
-  //regset = NT_PRSTATUS;
-  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_GETHWDBGINFO, tid, 0,
-                                            &reg_state, sizeof(reg_state));
-
-  if (error.Fail())
-    return error;
-
-  m_max_hbp_supported = m_max_hbp_supported & 0xff;
   m_refresh_hwdebug_info = false;
 
   return error;
 }
 
 Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(lldb::addr_t addr) {
-  //#if 0
   struct ppc_hw_breakpoint reg_state;
   Status error;
 
-  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_SETHWDEBUG, m_thread.GetID(),
-                                            0, &reg_state, sizeof(reg_state));
-
-  return error;
-
-  // memset(&reg_state, 0, sizeof(reg_state));
-
-  // reg_state.addr_mode = PPC_BREAKPOINT_MODE_EXACT;
-  // reg_state.condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
-  // reg_state.condition_value = 0;
-  // reg_state.version = 1;
+  reg_state.version = 1;
+  reg_state.trigger_type = PPC_BREAKPOINT_TRIGGER_WRITE;
+  reg_state.addr_mode = PPC_BREAKPOINT_MODE_EXACT;
+  reg_state.condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
   reg_state.addr = (uint64_t) addr;
+  reg_state.addr2 = 0;
+  reg_state.condition_value = 0;
 
   error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_SETHWDEBUG, m_thread.GetID(),
                                             0, &reg_state, sizeof(reg_state));
 
   return error;
-  //#endif
-
-  // Testing:
-
-  // Status error;
-  // return error;
 }
 
 Status NativeRegisterContextLinux_ppc64le::DoReadGPR(void *buf, size_t buf_size) {
