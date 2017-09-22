@@ -334,6 +334,47 @@ Status NativeRegisterContextLinux_ppc64le::WriteRegister(
       return Status();
   }
 
+  if (IsVSX(reg_index))
+  {
+      uint32_t vsx_offset = CalculateVsxOffset(reg_info);
+      assert(vsx_offset < 16*64);
+
+      if (vsx_offset < 16*32) {
+        error = ReadVSX();
+        if (error.Fail())
+          return error;
+
+        error = ReadFPR();
+        if (error.Fail())
+          return error;
+
+        uint64_t value[2];
+        ::memcpy(value, reg_value.GetBytes(), 16);
+        uint8_t *dst, *src;
+        src = (uint8_t *) value;
+        dst = (uint8_t *) &m_vsx_ppc64le + vsx_offset / 2;
+        ::memcpy(dst, src, 8);
+        src += 8;
+        dst = (uint8_t *) &m_fpr_ppc64le + vsx_offset / 2;
+        ::memcpy(dst, src, 8);
+
+        WriteVSX();
+        WriteFPR();
+      } else {
+        error = ReadVMX();
+        if (error.Fail())
+          return error;
+
+        // Get pointer to m_vmx_ppc64le variable and set the data from it.
+        uint32_t vmx_offset = vsx_offset -16*32;
+        uint8_t *dst = (uint8_t *) &m_vmx_ppc64le + vmx_offset;
+        ::memcpy(dst, reg_value.GetBytes(), reg_value.GetByteSize());
+        WriteVMX();
+      }
+
+      return Status();
+  }
+
   return Status("failed - register wasn't recognized to be a GPR, FPR, VSX or VMX, "
                 "write strategy unknown");
 }
