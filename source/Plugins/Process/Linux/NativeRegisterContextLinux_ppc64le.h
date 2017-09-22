@@ -163,8 +163,9 @@ private:
 
   struct VMX {
     VReg v[32];
-    VReg vscr;
-    VReg vrsave;
+    Reg pad;
+    Reg vscr;
+    uint32_t vrsave;
   };
 
   struct VSX {

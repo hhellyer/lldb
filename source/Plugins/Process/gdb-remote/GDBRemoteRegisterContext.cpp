@@ -199,18 +199,7 @@ bool GDBRemoteRegisterContext::ReadRegisterBytes(const RegisterInfo *reg_info,
   GDBRemoteCommunicationClient &gdb_comm(
       ((ProcessGDBRemote *)process)->GetGDBRemote());
 
-  bool invalidateRegs = false;
-
-  if (m_thread.GetProcess().get()) {
-    const ArchSpec &arch = m_thread.GetProcess()->GetTarget().GetArchitecture();
-
-    if (arch.IsValid() && arch.GetMachine() == llvm::Triple::ppc64le &&
-      arch.GetTriple().getOS() == llvm::Triple::Linux) {
-        invalidateRegs = true;
-    }
-  }
-
-  InvalidateIfNeeded(invalidateRegs);
+  InvalidateIfNeeded(false);
 
   const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
 

@@ -14,9 +14,9 @@
 
 // Computes the offset of the given GPR in the user data area.
 #define GPR_OFFSET(regname) (offsetof(GPR, regname))
-#define FPR_OFFSET(regname) (offsetof(FPR, regname))
-#define VMX_OFFSET(regname) (offsetof(VMX, regname))
-#define VSX_OFFSET(regname) (offsetof(VSX, regname))
+#define FPR_OFFSET(regname) (offsetof(FPR, regname) + sizeof(GPR))
+#define VMX_OFFSET(regname) (offsetof(VMX, regname) + sizeof(GPR) + sizeof(FPR))
+#define VSX_OFFSET(regname) (offsetof(VSX, regname) + sizeof(GPR) + sizeof(FPR) + sizeof(VMX))
 #define GPR_SIZE(regname) (sizeof(((GPR *)NULL)->regname))
 
 #include "Utility/PPC64LE_DWARF_Registers.h"
@@ -390,8 +390,9 @@ typedef struct _VMX {
   uint32_t vr29[4];
   uint32_t vr30[4];
   uint32_t vr31[4];
-  uint32_t vscr[4];
-  uint32_t vrsave[4];
+  uint32_t pad[2];
+  uint32_t vscr[2];
+  uint32_t vrsave;
 } VMX;
 
 

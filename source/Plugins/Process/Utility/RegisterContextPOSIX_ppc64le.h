@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__powerpc64__)
+
 #ifndef liblldb_RegisterContextPOSIX_powerpc_h_
 #define liblldb_RegisterContextPOSIX_powerpc_h_
 
@@ -89,8 +91,9 @@ protected:
 
   struct VMX {
     VReg v[32];
-    VReg vscr;
-    VReg vrsave;
+    Reg pad;
+    Reg vscr;
+    uint32_t vrsave;
   };
 
   struct VSX {
@@ -136,3 +139,5 @@ protected:
 };
 
 #endif // liblldb_RegisterContextPOSIX_powerpc_h_
+
+#endif // #if defined(__powerpc64__)
