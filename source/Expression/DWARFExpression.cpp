@@ -2830,41 +2830,8 @@ bool DWARFExpression::Evaluate(
         addr_t cfa = id.GetCallFrameAddress();
         if (cfa != LLDB_INVALID_ADDRESS) {
           stack.push_back(Scalar(cfa));
-          if (exe_ctx) {
-            if (process) {
-              uint8_t size = sizeof(lldb::addr_t);
-              uint8_t addr_bytes[sizeof(lldb::addr_t)];
-              Status error;
-              if (process->ReadMemory(cfa, &addr_bytes, size, error) == size) {
-                DataExtractor addr_data(addr_bytes, size,
-                                        process->GetByteOrder(), size);
-                lldb::offset_t addr_data_offset = 0;
-                stack.back().GetScalar() =
-                    addr_data.GetPointer(&addr_data_offset);
-              } else {
-                if (error_ptr) {
-                  error_ptr->SetErrorStringWithFormat(
-                      "Failed to dereference pointer from 0x%" PRIx64
-                      " for DW_OP_call_frame_cfa: %s\n",
-                      cfa, error.AsCString());
-                }
-                return false;
-              }
-            } else {
-              if (error_ptr) {
-                error_ptr->SetErrorStringWithFormat(
-                    "NULL process for DW_OP_call_frame_cfa opcode.\n");
-              }
-              return false;
-            }
-          } else {
-            if (error_ptr) {
-              error_ptr->SetErrorStringWithFormat(
-                  "NULL execution context for DW_OP_call_frame_cfa opcode.\n");
-            }
-            return false;
-          }
-       } else if (error_ptr)
+          stack.back().SetValueType(Value::eValueTypeLoadAddress);
+        } else if (error_ptr)
           error_ptr->SetErrorString("Stack frame does not include a canonical "
                                     "frame address for DW_OP_call_frame_cfa "
                                     "opcode.");
