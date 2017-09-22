@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__powerpc64__)
+
 #ifndef liblldb_RegisterContextPOSIX_powerpc_h_
 #define liblldb_RegisterContextPOSIX_powerpc_h_
 
@@ -136,3 +138,5 @@ protected:
 };
 
 #endif // liblldb_RegisterContextPOSIX_powerpc_h_
+
+#endif // #if defined(__powerpc64__)

@@ -8,6 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__powerpc64__)
+
 #include <cstring>
 #include <errno.h>
 #include <stdint.h>
@@ -223,3 +225,5 @@ uint32_t RegisterContextPOSIX_ppc64le::ConvertRegisterKindToRegisterNumber(
 
   return LLDB_INVALID_REGNUM;
 }
+
+#endif // #if defined(__powerpc64__)
