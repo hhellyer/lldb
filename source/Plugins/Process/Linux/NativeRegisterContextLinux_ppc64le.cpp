@@ -159,9 +159,9 @@ NativeRegisterContextLinux_ppc64le::NativeRegisterContextLinux_ppc64le(
   ::memset(&m_hwp_regs, 0, sizeof(m_hwp_regs));
   ::memset(&m_hbr_regs, 0, sizeof(m_hbr_regs));
 
-  // 16 is just a maximum value, query hardware for actual watchpoint count
-  m_max_hwp_supported = 1;
-  m_max_hbp_supported = 1;
+  // Actual supported hw capabilities to be updated by detection.
+  m_max_hwp_supported = 0;
+  m_max_hbp_supported = 0;
   m_refresh_hwdebug_info = true;
 }
 
@@ -692,6 +692,7 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
 
   // Check if we are setting watchpoint other than read/write/access
   // Also update watchpoint flag to match AArch64 write-read bit configuration.
+  // Does it match PPC64 write-read bit configuration???
   switch (watch_flags) {
   case 1:
     watch_flags = 2;
@@ -751,7 +752,7 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
   m_hwp_regs[wp_index].control = control_value;
 
   // PTRACE call to set corresponding watchpoint register.
-  error = WriteHardwareDebugRegs(eDREGTypeWATCH);
+  error = WriteHardwareDebugRegs(addr);
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].address = 0;
@@ -786,7 +787,7 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
   m_hwp_regs[wp_index].address = 0;
 
   // Ptrace call to update hardware debug registers
-  error = WriteHardwareDebugRegs(eDREGTypeWATCH);
+  error = WriteHardwareDebugRegs(m_hwp_regs[wp_index].address);
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].control = tempControl;
@@ -913,77 +914,46 @@ NativeRegisterContextLinux_ppc64le::GetWatchpointHitAddress(uint32_t wp_index) {
 }
 
 Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
-#if 0
   if (!m_refresh_hwdebug_info) {
     return Status();
   }
 
   ::pid_t tid = m_thread.GetID();
 
-  int regset = NT_ARM_HW_WATCH;
-  struct iovec ioVec;
-  struct user_hwdebug_state dreg_state;
+  struct ppc_debug_info hwdebug_info;
   Status error;
 
-  ioVec.iov_base = &dreg_state;
-  ioVec.iov_len = sizeof(dreg_state);
-  error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, tid, &regset,
-                                            &ioVec, ioVec.iov_len);
+  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_GETHWDBGINFO, tid, 0,
+                                            &hwdebug_info, sizeof(hwdebug_info));
 
   if (error.Fail())
     return error;
 
-  m_max_hwp_supported = dreg_state.dbg_info & 0xff;
-
-  regset = NT_ARM_HW_BREAK;
-  error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, tid, &regset,
-                                            &ioVec, ioVec.iov_len);
-
-  if (error.Fail())
-    return error;
-
-  m_max_hbp_supported = dreg_state.dbg_info & 0xff;
+  m_max_hwp_supported = hwdebug_info.num_data_bps;
+  m_max_hbp_supported = hwdebug_info.num_instruction_bps;
   m_refresh_hwdebug_info = false;
 
   return error;
-#endif
-  Status error;
-  return error;
 }
 
-Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(int hwbType) {
-#if 0
-  struct iovec ioVec;
-  struct user_hwdebug_state dreg_state;
+Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(lldb::addr_t addr) {
+  struct ppc_hw_breakpoint reg_state;
   Status error;
 
-  memset(&dreg_state, 0, sizeof(dreg_state));
-  ioVec.iov_base = &dreg_state;
-
-  if (hwbType == eDREGTypeWATCH) {
-    hwbType = NT_ARM_HW_WATCH;
-    ioVec.iov_len = sizeof(dreg_state.dbg_info) + sizeof(dreg_state.pad) +
-                    (sizeof(dreg_state.dbg_regs[0]) * m_max_hwp_supported);
-
-    for (uint32_t i = 0; i < m_max_hwp_supported; i++) {
-      dreg_state.dbg_regs[i].addr = m_hwp_regs[i].address;
-      dreg_state.dbg_regs[i].ctrl = m_hwp_regs[i].control;
-    }
-  } else {
-    hwbType = NT_ARM_HW_BREAK;
-    ioVec.iov_len = sizeof(dreg_state.dbg_info) + sizeof(dreg_state.pad) +
-                    (sizeof(dreg_state.dbg_regs[0]) * m_max_hbp_supported);
-
-    for (uint32_t i = 0; i < m_max_hbp_supported; i++) {
-      dreg_state.dbg_regs[i].addr = m_hbr_regs[i].address;
-      dreg_state.dbg_regs[i].ctrl = m_hbr_regs[i].control;
-    }
+  for (uint32_t i = 0; i < m_max_hwp_supported; i++) {
+    reg_state.addr = m_hwp_regs[i].address;
   }
 
-  return NativeProcessLinux::PtraceWrapper(PTRACE_SETREGSET, m_thread.GetID(),
-                                           &hwbType, &ioVec, ioVec.iov_len);
-#endif
-  Status error;
+  reg_state.version = 1;
+  reg_state.trigger_type = PPC_BREAKPOINT_TRIGGER_WRITE;
+  reg_state.addr_mode = PPC_BREAKPOINT_MODE_EXACT;
+  reg_state.condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
+  reg_state.addr2 = 0;
+  reg_state.condition_value = 0;
+
+  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_SETHWDEBUG, m_thread.GetID(),
+                                            0, &reg_state, sizeof(reg_state));
+
   return error;
 }
 
