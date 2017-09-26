@@ -53,7 +53,7 @@
 
 #include "lldb/Target/Language.h"
 
-#include "lldb/Utility/TaskPool.h"
+#include "lldb/Host/TaskPool.h"
 
 #include "DWARFASTParser.h"
 #include "DWARFASTParserClang.h"
@@ -71,6 +71,7 @@
 #include "LogChannelDWARF.h"
 #include "SymbolFileDWARFDebugMap.h"
 #include "SymbolFileDWARFDwo.h"
+#include "SymbolFileDWARFDwp.h"
 
 #include "llvm/Support/FileSystem.h"
 
@@ -497,6 +498,21 @@ uint32_t SymbolFileDWARF::CalculateAbilities() {
     if (section_list == NULL)
       return 0;
 
+    // On non Apple platforms we might have .debug_types debug info that
+    // is created by using "-fdebug-types-section". LLDB currently will try
+    // to load this debug info, but it causes crashes during debugging when
+    // types are missing since it doesn't know how to parse the info in
+    // the .debug_types type units. This causes all complex debug info
+    // types to be unresolved. Because this causes LLDB to crash and since
+    // it really doesn't provide a solid debuggiung experience, we should
+    // disable trying to debug this kind of DWARF until support gets
+    // added or deprecated.
+    if (section_list->FindSectionByName(ConstString(".debug_types"))) {
+      m_obj_file->GetModule()->ReportWarning(
+        "lldb doesn’t support .debug_types debug info");
+      return 0;
+    }
+
     uint64_t debug_abbrev_file_size = 0;
     uint64_t debug_info_file_size = 0;
     uint64_t debug_line_file_size = 0;
@@ -516,6 +532,20 @@ uint32_t SymbolFileDWARF::CalculateAbilities() {
               .get();
       if (section)
         debug_abbrev_file_size = section->GetFileSize();
+
+      DWARFDebugAbbrev *abbrev = DebugAbbrev();
+      if (abbrev) {
+        std::set<dw_form_t> invalid_forms;
+        abbrev->GetUnsupportedForms(invalid_forms);
+        if (!invalid_forms.empty()) {
+          StreamString error;
+          error.Printf("unsupported DW_FORM value%s:", invalid_forms.size() > 1 ? "s" : "");
+          for (auto form : invalid_forms)
+            error.Printf(" %#x", form);
+          m_obj_file->GetModule()->ReportWarning("%s", error.GetString().str().c_str());
+          return 0;
+        }
+      }
 
       section =
           section_list->FindSectionByType(eSectionTypeDWARFDebugLine, true)
@@ -1539,6 +1569,16 @@ SymbolFileDWARF::GetDwoSymbolFileForCompileUnit(
   if (!dwo_name)
     return nullptr;
 
+  SymbolFileDWARFDwp *dwp_symfile = GetDwpSymbolFile();
+  if (dwp_symfile) {
+    uint64_t dwo_id = cu_die.GetAttributeValueAsUnsigned(this, &dwarf_cu,
+                                                         DW_AT_GNU_dwo_id, 0);
+    std::unique_ptr<SymbolFileDWARFDwo> dwo_symfile =
+        dwp_symfile->GetSymbolFileForDwoId(&dwarf_cu, dwo_id);
+    if (dwo_symfile)
+      return dwo_symfile;
+  }
+
   FileSpec dwo_file(dwo_name, true);
   if (dwo_file.IsRelative()) {
     const char *comp_dir = cu_die.GetAttributeValueAsString(
@@ -1600,7 +1640,29 @@ void SymbolFileDWARF::UpdateExternalModuleListIfNeeded() {
             }
             dwo_module_spec.GetArchitecture() =
                 m_obj_file->GetModule()->GetArchitecture();
-            // printf ("Loading dwo = '%s'\n", dwo_path);
+
+            // When LLDB loads "external" modules it looks at the
+            // presence of DW_AT_GNU_dwo_name.
+            // However, when the already created module
+            // (corresponding to .dwo itself) is being processed,
+            // it will see the presence of DW_AT_GNU_dwo_name
+            // (which contains the name of dwo file) and
+            // will try to call ModuleList::GetSharedModule again.
+            // In some cases (i.e. for empty files) Clang 4.0
+            // generates a *.dwo file which has DW_AT_GNU_dwo_name,
+            // but no DW_AT_comp_dir. In this case the method
+            // ModuleList::GetSharedModule will fail and
+            // the warning will be printed. However, as one can notice
+            // in this case we don't actually need to try to load the already
+            // loaded module (corresponding to .dwo) so we simply skip it.
+            if (m_obj_file->GetFileSpec()
+                        .GetFileNameExtension()
+                        .GetStringRef() == "dwo" &&
+                llvm::StringRef(m_obj_file->GetFileSpec().GetPath())
+                    .endswith(dwo_module_spec.GetFileSpec().GetPath())) {
+              continue;
+            }
+
             Status error = ModuleList::GetSharedModule(
                 dwo_module_spec, module_sp, NULL, NULL, NULL);
             if (!module_sp) {
@@ -1640,9 +1702,8 @@ SymbolFileDWARF::GlobalVariableMap &SymbolFileDWARF::GetGlobalAranges() {
                 const DWARFExpression &location = var_sp->LocationExpression();
                 Value location_result;
                 Status error;
-                if (location.Evaluate(nullptr, nullptr, nullptr,
-                                      LLDB_INVALID_ADDRESS, nullptr, nullptr,
-                                      location_result, &error)) {
+                if (location.Evaluate(nullptr, LLDB_INVALID_ADDRESS, nullptr,
+                                      nullptr, location_result, &error)) {
                   if (location_result.GetValueType() ==
                       Value::eValueTypeFileAddress) {
                     lldb::addr_t file_addr =
@@ -4287,4 +4348,15 @@ SymbolFileDWARFDebugMap *SymbolFileDWARF::GetDebugMapSymfile() {
 DWARFExpression::LocationListFormat
 SymbolFileDWARF::GetLocationListFormat() const {
   return DWARFExpression::RegularLocationList;
+}
+
+SymbolFileDWARFDwp *SymbolFileDWARF::GetDwpSymbolFile() {
+  llvm::call_once(m_dwp_symfile_once_flag, [this]() {
+    FileSpec dwp_filespec(m_obj_file->GetFileSpec().GetPath() + ".dwp", false);
+    if (dwp_filespec.Exists()) {
+      m_dwp_symfile = SymbolFileDWARFDwp::Create(GetObjectFile()->GetModule(),
+                                                 dwp_filespec);
+    }
+  });
+  return m_dwp_symfile.get();
 }

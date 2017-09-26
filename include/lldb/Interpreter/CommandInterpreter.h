@@ -242,6 +242,8 @@ public:
                      bool repeat_on_empty_command = true,
                      bool no_context_switching = false);
 
+  bool WasInterrupted() const;
+
   //------------------------------------------------------------------
   /// Execute a list of commands in sequence.
   ///
@@ -522,6 +524,24 @@ private:
                               StringList &commands_help,
                               CommandObject::CommandMap &command_map);
 
+  // An interruptible wrapper around the stream output
+  void PrintCommandOutput(Stream &stream, llvm::StringRef str,
+                          bool interruptible);
+
+  // A very simple state machine which models the command handling transitions
+  enum class CommandHandlingState {
+    eIdle,
+    eInProgress,
+    eInterrupted,
+  };
+
+  std::atomic<CommandHandlingState> m_command_state{
+      CommandHandlingState::eIdle};
+
+  void StartHandlingCommand();
+  void FinishHandlingCommand();
+  bool InterruptCommand();
+
   Debugger &m_debugger; // The debugger session that this interpreter is
                         // associated with
   ExecutionContextRef m_exe_ctx_ref; // The current execution context to use
@@ -539,7 +559,7 @@ private:
   std::string m_repeat_command; // Stores the command that will be executed for
                                 // an empty command string.
   lldb::ScriptInterpreterSP m_script_interpreter_sp;
-  std::mutex m_script_interpreter_mutex;
+  std::recursive_mutex m_script_interpreter_mutex;
   lldb::IOHandlerSP m_command_io_handler_sp;
   char m_comment_char;
   bool m_batch_command_mode;

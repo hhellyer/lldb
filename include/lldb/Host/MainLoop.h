@@ -12,10 +12,14 @@
 
 #include "lldb/Host/Config.h"
 #include "lldb/Host/MainLoopBase.h"
-
 #include "llvm/ADT/DenseMap.h"
+#include <csignal>
 
-#if !HAVE_PPOLL && !HAVE_SYS_EVENT_H
+#ifdef __ANDROID__
+#define FORCE_PSELECT
+#endif
+
+#if !HAVE_PPOLL && !HAVE_SYS_EVENT_H && !defined(FORCE_PSELECT)
 #define SIGNAL_POLLING_UNSUPPORTED 1
 #endif
 

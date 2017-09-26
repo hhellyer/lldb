@@ -10,6 +10,7 @@
 #include "llvm/Config/llvm-config.h"
 
 #include "lldb/Host/MainLoop.h"
+#include "lldb/Host/PosixApi.h"
 #include "lldb/Utility/Status.h"
 #include <algorithm>
 #include <cassert>
@@ -35,10 +36,6 @@
 #define POLL WSAPoll
 #else
 #define POLL poll
-#endif
-
-#ifdef __ANDROID__
-#define FORCE_PSELECT
 #endif
 
 #if SIGNAL_POLLING_UNSUPPORTED
