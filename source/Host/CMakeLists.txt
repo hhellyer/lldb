@@ -31,6 +31,7 @@ add_host_subdirectory(common
   common/SoftwareBreakpoint.cpp
   common/StringConvert.cpp
   common/Symbols.cpp
+  common/TaskPool.cpp
   common/TCPSocket.cpp
   common/Terminal.cpp
   common/ThreadLauncher.cpp
@@ -103,6 +104,10 @@ else()
       macosx/cfcpp/CFCMutableSet.cpp
       macosx/cfcpp/CFCString.cpp
       )
+    if(IOS)
+      set_property(SOURCE macosx/Host.mm APPEND PROPERTY 
+               COMPILE_DEFINITIONS "NO_XPC_SERVICES=1")
+    endif()
 
 
   elseif (CMAKE_SYSTEM_NAME MATCHES "Linux|Android")
@@ -152,9 +157,23 @@ if (${get_python_libdir})
   endif()
 endif()
 
+set(EXTRA_LIBS)
 if (CMAKE_SYSTEM_NAME MATCHES "NetBSD")
- set(EXTRA_LIBS kvm)
+  list(APPEND EXTRA_LIBS kvm)
 endif ()
+if (APPLE)
+  list(APPEND EXTRA_LIBS xml2)
+else ()
+  if (LIBXML2_FOUND)
+    list(APPEND EXTRA_LIBS ${LIBXML2_LIBRARIES})
+  endif()
+endif ()
+if (HAVE_LIBDL)
+  list(APPEND EXTRA_LIBS ${CMAKE_DL_LIBS})
+endif()
+if (NOT LLDB_DISABLE_LIBEDIT)
+  list(APPEND EXTRA_LIBS edit)
+endif()
 
 add_lldb_library(lldbHost
   ${HOST_SOURCES}
