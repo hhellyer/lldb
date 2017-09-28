@@ -789,6 +789,8 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
   // Ptrace call to update hardware debug registers
   error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_DELHWDEBUG, m_thread.GetID(),
                                             0, &(m_hwp_regs[wp_index].slot));
+  // error = ptrace(static_cast<__ptrace_request>(PPC_PTRACE_DELHWDEBUG), static_cast<::pid_t>(m_thread.GetID()),
+  //                0, (m_hwp_regs[wp_index].slot));
 
 
   if (error.Fail()) {

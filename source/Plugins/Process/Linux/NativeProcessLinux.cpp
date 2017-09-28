@@ -2308,13 +2308,17 @@ Status NativeProcessLinux::PtraceWrapper(int req, lldb::pid_t pid, void *addr,
   PtraceDisplayBytes(req, data, data_size);
 
   errno = 0;
-  if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET)
+  if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET) {
     ret = ptrace(static_cast<__ptrace_request>(req), static_cast<::pid_t>(pid),
                  *(unsigned int *)addr, data);
-  else
+  } else if (req == PPC_PTRACE_DELHWDEBUG) {
+    long real_data = *static_cast<long*>(data);
+    ret = ptrace(static_cast<__ptrace_request>(req), static_cast<::pid_t>(pid),
+                 addr, real_data);
+  } else {
     ret = ptrace(static_cast<__ptrace_request>(req), static_cast<::pid_t>(pid),
                  addr, data);
-
+  }
   if (ret == -1)
     error.SetErrorToErrno();
 

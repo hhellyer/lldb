@@ -22,6 +22,8 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Utility/Log.h"
 
+#define ELF_NGREG 48
+
 class ProcessMonitor;
 
 class RegisterContextPOSIX_ppc64le : public lldb_private::RegisterContext {
