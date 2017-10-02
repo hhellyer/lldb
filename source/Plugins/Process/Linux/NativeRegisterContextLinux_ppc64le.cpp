@@ -37,11 +37,6 @@
 
 #define REG_CONTEXT_SIZE (GetGPRSize() + GetFPRSize() + GetVMXSize() + GetVSXSize())
 
-// Read and write mode for watchpoint
-#define WRITE_MODE 0x1
-#define READ_MODE 0x2
-#define READ_WRITE 0x3
-
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_linux;
@@ -696,24 +691,19 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
   lldb::addr_t real_addr = addr;
   uint32_t rw_mode = 0;
 
-  if (watch_flags == READ_WRITE) {
-    rw_mode = PPC_BREAKPOINT_TRIGGER_RW;
-  } else if (watch_flags == READ_MODE){
-    rw_mode = PPC_BREAKPOINT_TRIGGER_READ;
-  } else {
-    rw_mode = PPC_BREAKPOINT_TRIGGER_WRITE;
-  }
-
   // Check if we are setting watchpoint other than read/write/access
-  // Also update watchpoint flag to match AArch64 write-read bit configuration.
+  // Update watchpoint flag to match ppc64le write-read bit configuration.
   switch (watch_flags) {
   case 1:
+    rw_mode = PPC_BREAKPOINT_TRIGGER_WRITE;
     watch_flags = 2;
     break;
   case 2:
+    rw_mode = PPC_BREAKPOINT_TRIGGER_READ;
     watch_flags = 1;
     break;
   case 3:
+    rw_mode = PPC_BREAKPOINT_TRIGGER_RW;
     break;
   default:
     return LLDB_INVALID_INDEX32;
