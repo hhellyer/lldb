@@ -187,6 +187,7 @@ private:
     uint32_t control;       // Breakpoint/watchpoint control value.
     uint32_t refcount;      // Serves as enable/disable and refernce counter.
     long slot;             // Saves the value returned from PTRACE_SETHWDEBUG
+    int mode;
   };
 
   struct DREG m_hbr_regs[1];

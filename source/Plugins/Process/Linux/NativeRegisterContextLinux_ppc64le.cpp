@@ -37,6 +37,11 @@
 
 #define REG_CONTEXT_SIZE (GetGPRSize() + GetFPRSize() + GetVMXSize() + GetVSXSize())
 
+// Read and write mode for watchpoint
+#define WRITE_MODE 0x1
+#define READ_MODE 0x2
+#define READ_WRITE 0x3
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_linux;
@@ -689,16 +694,24 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
 
   uint32_t control_value = 0, wp_index = 0;
   lldb::addr_t real_addr = addr;
+  uint32_t rw_mode = 0;
+
+  if (watch_flags == READ_WRITE) {
+    rw_mode = PPC_BREAKPOINT_TRIGGER_RW;
+  } else if (watch_flags == READ_MODE){
+    rw_mode = PPC_BREAKPOINT_TRIGGER_READ;
+  } else {
+    rw_mode = PPC_BREAKPOINT_TRIGGER_WRITE;
+  }
 
   // Check if we are setting watchpoint other than read/write/access
   // Also update watchpoint flag to match AArch64 write-read bit configuration.
-  // Does it match PPC64 write-read bit configuration???
   switch (watch_flags) {
   case 1:
-    //watch_flags = 2;
+    watch_flags = 2;
     break;
   case 2:
-    //watch_flags = 1;
+    watch_flags = 1;
     break;
   case 3:
     break;
@@ -750,6 +763,7 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
   m_hwp_regs[wp_index].real_addr = real_addr;
   m_hwp_regs[wp_index].address = addr;
   m_hwp_regs[wp_index].control = control_value;
+  m_hwp_regs[wp_index].mode = rw_mode;
 
   // PTRACE call to set corresponding watchpoint register.
   error = WriteHardwareDebugRegs();
@@ -786,6 +800,7 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
   // Update watchpoint in local cache
   m_hwp_regs[wp_index].control &= ~1;
   m_hwp_regs[wp_index].address = 0;
+  m_hwp_regs[wp_index].slot = 0;
 
   // Ptrace call to update hardware debug registers
   error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_DELHWDEBUG, m_thread.GetID(),
@@ -878,7 +893,7 @@ Status NativeRegisterContextLinux_ppc64le::GetWatchpointHitIndex(
     watch_addr = m_hwp_regs[wp_index].address;
 
     if (WatchpointIsEnabled(wp_index) && trap_addr >= watch_addr &&
-        trap_addr < watch_addr + watch_size) {
+        trap_addr <= watch_addr + watch_size) {
       m_hwp_regs[wp_index].hit_addr = trap_addr;
       return Status();
     }
@@ -945,10 +960,10 @@ Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs() {
 
   for (uint32_t i = 0; i < m_max_hwp_supported; i++) {
     reg_state.addr = m_hwp_regs[i].address;
+    reg_state.trigger_type = m_hwp_regs[i].mode;
   }
 
   reg_state.version = 1;
-  reg_state.trigger_type = PPC_BREAKPOINT_TRIGGER_WRITE;
   reg_state.addr_mode = PPC_BREAKPOINT_MODE_EXACT;
   reg_state.condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
   reg_state.addr2 = 0;
