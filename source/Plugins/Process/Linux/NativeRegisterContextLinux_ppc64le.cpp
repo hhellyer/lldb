@@ -552,7 +552,7 @@ NativeRegisterContextLinux_ppc64le::SetHardwareBreakpoint(lldb::addr_t addr,
   m_hbr_regs[bp_index].control = control_value;
 
   // PTRACE call to set corresponding hardware breakpoint register.
-  error = WriteHardwareDebugRegs(eDREGTypeBREAK);
+  error = WriteHardwareDebugRegs();
 
   if (error.Fail()) {
     m_hbr_regs[bp_index].address = 0;
@@ -586,7 +586,7 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareBreakpoint(
   m_hbr_regs[hw_idx].address = 0;
 
   // PTRACE call to clear corresponding hardware breakpoint register.
-  error = WriteHardwareDebugRegs(eDREGTypeBREAK);
+  error = WriteHardwareDebugRegs();
 
   if (error.Fail()) {
     m_hbr_regs[hw_idx].control = tempControl;
@@ -648,7 +648,7 @@ Status NativeRegisterContextLinux_ppc64le::ClearAllHardwareBreakpoints() {
       m_hbr_regs[i].address = 0;
 
       // Ptrace call to update hardware debug registers
-      error = WriteHardwareDebugRegs(eDREGTypeBREAK);
+      error = WriteHardwareDebugRegs();
 
       if (error.Fail()) {
         m_hbr_regs[i].control = tempControl;
@@ -752,7 +752,7 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
   m_hwp_regs[wp_index].control = control_value;
 
   // PTRACE call to set corresponding watchpoint register.
-  error = WriteHardwareDebugRegs(addr);
+  error = WriteHardwareDebugRegs();
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].address = 0;
@@ -781,6 +781,7 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
   // Create a backup we can revert to in case of failure.
   lldb::addr_t tempAddr = m_hwp_regs[wp_index].address;
   uint32_t tempControl = m_hwp_regs[wp_index].control;
+  long tempSlot = m_hwp_regs[wp_index].slot;
 
   // Update watchpoint in local cache
   m_hwp_regs[wp_index].control &= ~1;
@@ -788,11 +789,12 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
 
   // Ptrace call to update hardware debug registers
   error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_DELHWDEBUG, m_thread.GetID(),
-                                            0, &(m_hwp_regs[wp_index].slot));
+                                            0, &(tempSlot));
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].control = tempControl;
     m_hwp_regs[wp_index].address = tempAddr;
+    m_hwp_regs[wp_index].slot = tempSlot;
 
     return false;
   }
@@ -821,7 +823,7 @@ Status NativeRegisterContextLinux_ppc64le::ClearAllHardwareWatchpoints() {
       m_hwp_regs[i].address = 0;
 
       // Ptrace call to update hardware debug registers
-      error = WriteHardwareDebugRegs(eDREGTypeWATCH);
+      error = WriteHardwareDebugRegs();
 
       if (error.Fail()) {
         m_hwp_regs[i].control = tempControl;
@@ -937,7 +939,7 @@ Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
   return error;
 }
 
-Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs(lldb::addr_t addr) {
+Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs() {
   struct ppc_hw_breakpoint reg_state;
   Status error;
 

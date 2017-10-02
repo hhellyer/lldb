@@ -206,7 +206,7 @@ private:
 
   Status ReadHardwareDebugInfo();
 
-  Status WriteHardwareDebugRegs(lldb::addr_t addr);
+  Status WriteHardwareDebugRegs();
 
   uint32_t CalculateFprOffset(const RegisterInfo *reg_info) const;
 
