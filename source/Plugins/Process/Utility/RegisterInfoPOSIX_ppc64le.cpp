@@ -1,4 +1,4 @@
-//===-- RegisterInfoPOSIX_ppc64le.cpp ------------------------------*- C++ -*-===//
+//===-- RegisterInfoPOSIX_ppc64le.cpp --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -53,7 +53,7 @@ RegisterInfoPOSIX_ppc64le::RegisterInfoPOSIX_ppc64le(
       m_register_info_count(GetRegisterInfoCount(target_arch)) {}
 
 size_t RegisterInfoPOSIX_ppc64le::GetGPRSize() const {
-  return sizeof(struct RegisterInfoPOSIX_ppc64le::GPR);
+  return sizeof(GPR);
 }
 
 const lldb_private::RegisterInfo *

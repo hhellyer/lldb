@@ -1,5 +1,4 @@
-//===-- PPC64LE_ehframe_Registers.h -------------------------------------*- C++
-//-*-===//
+//===-- PPC64LE_ehframe_Registers.h -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

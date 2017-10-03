@@ -1,4 +1,4 @@
-//===-- lldb-ppc64le-register-enums.h -----------------------------*- C++ -*-===//
+//===-- lldb-ppc64le-register-enums.h ---------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- RegisterInfos_ppc64le.h -----------------------------------*- C++ -*-===//
+//===-- RegisterInfos_ppc64le.h ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,7 +16,8 @@
 #define GPR_OFFSET(regname) (offsetof(GPR, regname))
 #define FPR_OFFSET(regname) (offsetof(FPR, regname) + sizeof(GPR))
 #define VMX_OFFSET(regname) (offsetof(VMX, regname) + sizeof(GPR) + sizeof(FPR))
-#define VSX_OFFSET(regname) (offsetof(VSX, regname) + sizeof(GPR) + sizeof(FPR) + sizeof(VMX))
+#define VSX_OFFSET(regname) (offsetof(VSX, regname) + sizeof(GPR) \
+                             + sizeof(FPR) + sizeof(VMX))
 #define GPR_SIZE(regname) (sizeof(((GPR *)NULL)->regname))
 
 #include "Utility/PPC64LE_DWARF_Registers.h"
@@ -64,8 +65,8 @@
                                 NULL, NULL, NULL, 0                            \
   }
 
-// General purpose registers.            EH_Frame,                  DWARF,
-// Generic,                Process Plugin
+// General purpose registers.
+// EH_Frame, Generic, Process Plugin
 #define POWERPC_REGS                                                           \
   DEFINE_GPR(r0, NULL, LLDB_INVALID_REGNUM)                                    \
   , DEFINE_GPR(r1, "sp", LLDB_REGNUM_GENERIC_SP),                              \
@@ -319,6 +320,7 @@ typedef struct _GPR {
   uint64_t cr;
   uint64_t softe;
   uint64_t trap;
+  uint64_t pad[4];
 } GPR;
 
 typedef struct _FPR {

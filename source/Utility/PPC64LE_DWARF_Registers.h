@@ -1,4 +1,4 @@
-//===-- PPC64LE_DWARF_Registers.h ---------------------------------*- C++ -*-===//
+//===-- PPC64LE_DWARF_Registers.h -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

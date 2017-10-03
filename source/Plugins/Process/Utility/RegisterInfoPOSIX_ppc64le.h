@@ -1,4 +1,4 @@
-//===-- RegisterInfoPOSIX_ppc64le.h -------------------------------*- C++ -*-===//
+//===-- RegisterInfoPOSIX_ppc64le.h -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,47 +16,6 @@
 
 class RegisterInfoPOSIX_ppc64le : public lldb_private::RegisterInfoInterface {
 public:
-  struct GPR {
-    uint64_t r[32]; // r0-r32
-    uint64_t msr;
-    uint64_t origr3;
-    uint64_t ctr;
-    uint64_t lr;
-    uint64_t xer;
-    uint64_t cr;
-    uint64_t softe;
-    uint64_t trap;
-    uint64_t dar;
-    uint64_t dsisr;
-    uint64_t result;
-    uint64_t dscr;
-    uint64_t pad[4];
-  };
-
-  struct Reg {
-    uint8_t bytes[8];
-  };
-
-  struct VReg {
-    uint8_t bytes[16];
-  };
-
-  struct FPU {
-    Reg v[32];
-    Reg fpscr;
-  };
-
-  struct VMX {
-    VReg v[32];
-    Reg pad;
-    Reg vscr;
-    uint32_t vrsave;
-  };
-
-  struct VSX {
-    Reg v[32];
-  };
-
   RegisterInfoPOSIX_ppc64le(const lldb_private::ArchSpec &target_arch);
 
   size_t GetGPRSize() const override;
