@@ -138,6 +138,12 @@ NativeRegisterContextLinux_ppc64le::NativeRegisterContextLinux_ppc64le(
   ::memset(&m_fpr_ppc64le, 0, sizeof(m_fpr_ppc64le));
   ::memset(&m_vmx_ppc64le, 0, sizeof(m_vmx_ppc64le));
   ::memset(&m_vsx_ppc64le, 0, sizeof(m_vsx_ppc64le));
+  ::memset(&m_hwp_regs, 0, sizeof(m_hwp_regs));
+
+  // 16 is just a maximum value, query hardware for actual watchpoint count
+  m_max_hwp_supported = 16;
+  m_max_hbp_supported = 16;
+  m_refresh_hwdebug_info = true;
 }
 
 uint32_t NativeRegisterContextLinux_ppc64le::GetRegisterSetCount() const {
@@ -575,6 +581,282 @@ bool NativeRegisterContextLinux_ppc64le::IsVMX(unsigned reg) {
 
 bool NativeRegisterContextLinux_ppc64le::IsVSX(unsigned reg) {
   return (reg >= k_first_vsx_ppc64le) && (reg <= k_last_vsx_ppc64le);
+}
+
+uint32_t NativeRegisterContextLinux_ppc64le::NumSupportedHardwareWatchpoints() {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+
+  // Read hardware breakpoint and watchpoint information.
+  Status error = ReadHardwareDebugInfo();
+
+  if (error.Fail())
+    return 0;
+
+  LLDB_LOG(log, "{0}", m_max_hwp_supported);
+  return m_max_hwp_supported;
+}
+
+uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
+    lldb::addr_t addr, size_t size, uint32_t watch_flags) {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+  LLDB_LOG(log, "addr: {0:x}, size: {1:x} watch_flags: {2:x}", addr, size,
+           watch_flags);
+
+  // Read hardware breakpoint and watchpoint information.
+  Status error = ReadHardwareDebugInfo();
+
+  if (error.Fail())
+    return LLDB_INVALID_INDEX32;
+
+  uint32_t control_value = 0, wp_index = 0;
+  lldb::addr_t real_addr = addr;
+  uint32_t rw_mode = 0;
+
+  // Check if we are setting watchpoint other than read/write/access
+  // Update watchpoint flag to match ppc64le write-read bit configuration.
+  switch (watch_flags) {
+  case 1:
+    rw_mode = PPC_BREAKPOINT_TRIGGER_WRITE;
+    watch_flags = 2;
+    break;
+  case 2:
+    rw_mode = PPC_BREAKPOINT_TRIGGER_READ;
+    watch_flags = 1;
+    break;
+  case 3:
+    rw_mode = PPC_BREAKPOINT_TRIGGER_RW;
+    break;
+  default:
+    return LLDB_INVALID_INDEX32;
+  }
+
+  // Check if size has a valid hardware watchpoint length.
+  if (size != 1 && size != 2 && size != 4 && size != 8)
+    return LLDB_INVALID_INDEX32;
+
+  // Check 8-byte alignment for hardware watchpoint target address.
+  // Below is a hack to recalculate address and size in order to
+  // make sure we can watch non 8-byte alligned addresses as well.
+  if (addr & 0x07) {
+    uint8_t watch_mask = (addr & 0x07) + size;
+
+    if (watch_mask > 0x08)
+      return LLDB_INVALID_INDEX32;
+    else if (watch_mask <= 0x02)
+      size = 2;
+    else if (watch_mask <= 0x04)
+      size = 4;
+    else
+      size = 8;
+
+    addr = addr & (~0x07);
+  }
+
+  // Setup control value
+  control_value = watch_flags << 3;
+  control_value |= ((1 << size) - 1) << 5;
+  control_value |= (2 << 1) | 1;
+
+  // Iterate over stored watchpoints and find a free wp_index
+  wp_index = LLDB_INVALID_INDEX32;
+  for (uint32_t i = 0; i < m_max_hwp_supported; i++) {
+    if ((m_hwp_regs[i].control & 1) == 0) {
+      wp_index = i; // Mark last free slot
+    } else if (m_hwp_regs[i].address == addr) {
+      return LLDB_INVALID_INDEX32; // We do not support duplicate watchpoints.
+    }
+  }
+
+  if (wp_index == LLDB_INVALID_INDEX32)
+    return LLDB_INVALID_INDEX32;
+
+  // Update watchpoint in local cache
+  m_hwp_regs[wp_index].real_addr = real_addr;
+  m_hwp_regs[wp_index].address = addr;
+  m_hwp_regs[wp_index].control = control_value;
+  m_hwp_regs[wp_index].mode = rw_mode;
+
+  // PTRACE call to set corresponding watchpoint register.
+  error = WriteHardwareDebugRegs();
+
+  if (error.Fail()) {
+    m_hwp_regs[wp_index].address = 0;
+    m_hwp_regs[wp_index].control &= ~1;
+
+    return LLDB_INVALID_INDEX32;
+  }
+
+  return wp_index;
+}
+
+bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
+    uint32_t wp_index) {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+  LLDB_LOG(log, "wp_index: {0}", wp_index);
+
+  // Read hardware breakpoint and watchpoint information.
+  Status error = ReadHardwareDebugInfo();
+
+  if (error.Fail())
+    return false;
+
+  if (wp_index >= m_max_hwp_supported)
+    return false;
+
+  // Create a backup we can revert to in case of failure.
+  lldb::addr_t tempAddr = m_hwp_regs[wp_index].address;
+  uint32_t tempControl = m_hwp_regs[wp_index].control;
+  long tempSlot = m_hwp_regs[wp_index].slot;
+
+  // Update watchpoint in local cache
+  m_hwp_regs[wp_index].control &= ~1;
+  m_hwp_regs[wp_index].address = 0;
+  m_hwp_regs[wp_index].slot = 0;
+  m_hwp_regs[wp_index].mode = 0;
+
+  // Ptrace call to update hardware debug registers
+  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_DELHWDEBUG, m_thread.GetID(),
+                                            0, &(tempSlot));
+
+  if (error.Fail()) {
+    m_hwp_regs[wp_index].control = tempControl;
+    m_hwp_regs[wp_index].address = tempAddr;
+    m_hwp_regs[wp_index].slot = tempSlot;
+
+    return false;
+  }
+
+  return true;
+}
+
+uint32_t
+NativeRegisterContextLinux_ppc64le::GetWatchpointSize(uint32_t wp_index) {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+  LLDB_LOG(log, "wp_index: {0}", wp_index);
+
+  switch ((m_hwp_regs[wp_index].control >> 5) & 0xff) {
+  case 0x01:
+    return 1;
+  case 0x03:
+    return 2;
+  case 0x0f:
+    return 4;
+  case 0xff:
+    return 8;
+  default:
+    return 0;
+  }
+}
+
+bool NativeRegisterContextLinux_ppc64le::WatchpointIsEnabled(uint32_t wp_index) {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+  LLDB_LOG(log, "wp_index: {0}", wp_index);
+
+  if ((m_hwp_regs[wp_index].control & 0x1) == 0x1)
+    return true;
+  else
+    return false;
+}
+
+Status NativeRegisterContextLinux_ppc64le::GetWatchpointHitIndex(
+    uint32_t &wp_index, lldb::addr_t trap_addr) {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+  LLDB_LOG(log, "wp_index: {0}, trap_addr: {1:x}", wp_index, trap_addr);
+
+  uint32_t watch_size;
+  lldb::addr_t watch_addr;
+
+  for (wp_index = 0; wp_index < m_max_hwp_supported; ++wp_index) {
+    watch_size = GetWatchpointSize(wp_index);
+    watch_addr = m_hwp_regs[wp_index].address;
+
+    if (WatchpointIsEnabled(wp_index) && trap_addr >= watch_addr &&
+        trap_addr <= watch_addr + watch_size) {
+      m_hwp_regs[wp_index].hit_addr = trap_addr;
+      return Status();
+    }
+  }
+
+  wp_index = LLDB_INVALID_INDEX32;
+  return Status();
+}
+
+lldb::addr_t
+NativeRegisterContextLinux_ppc64le::GetWatchpointAddress(uint32_t wp_index) {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+  LLDB_LOG(log, "wp_index: {0}", wp_index);
+
+  if (wp_index >= m_max_hwp_supported)
+    return LLDB_INVALID_ADDRESS;
+
+  if (WatchpointIsEnabled(wp_index))
+    return m_hwp_regs[wp_index].real_addr;
+  else
+    return LLDB_INVALID_ADDRESS;
+}
+
+lldb::addr_t
+NativeRegisterContextLinux_ppc64le::GetWatchpointHitAddress(uint32_t wp_index) {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+  LLDB_LOG(log, "wp_index: {0}", wp_index);
+
+  if (wp_index >= m_max_hwp_supported)
+    return LLDB_INVALID_ADDRESS;
+
+  if (WatchpointIsEnabled(wp_index))
+    return m_hwp_regs[wp_index].hit_addr;
+  else
+    return LLDB_INVALID_ADDRESS;
+}
+
+Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
+  if (!m_refresh_hwdebug_info) {
+    return Status();
+  }
+
+  ::pid_t tid = m_thread.GetID();
+
+  struct ppc_debug_info hwdebug_info;
+  Status error;
+
+  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_GETHWDBGINFO, tid, 0,
+                                            &hwdebug_info, sizeof(hwdebug_info));
+
+  if (error.Fail())
+    return error;
+
+  m_max_hwp_supported = hwdebug_info.num_data_bps;
+  m_max_hbp_supported = hwdebug_info.num_instruction_bps;
+  m_refresh_hwdebug_info = false;
+
+  return error;
+}
+
+Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs() {
+  struct ppc_hw_breakpoint reg_state;
+  Status error;
+  long ret;
+
+  for (uint32_t i = 0; i < m_max_hwp_supported; i++) {
+    reg_state.addr = m_hwp_regs[i].address;
+    reg_state.trigger_type = m_hwp_regs[i].mode;
+    reg_state.version = 1;
+    reg_state.addr_mode = PPC_BREAKPOINT_MODE_EXACT;
+    reg_state.condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
+    reg_state.addr2 = 0;
+    reg_state.condition_value = 0;
+
+    error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_SETHWDEBUG, m_thread.GetID(),
+                                              0, &reg_state, sizeof(reg_state),
+                                              &ret);
+
+    if (error.Fail())
+      return error;
+
+    m_hwp_regs[i].slot = ret;
+  }
+
+  return error;
 }
 
 #endif // defined(__powerpc64__)
