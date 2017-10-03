@@ -947,24 +947,24 @@ Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
 Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs() {
   struct ppc_hw_breakpoint reg_state;
   Status error;
+  long ret;
 
   for (uint32_t i = 0; i < m_max_hwp_supported; i++) {
     reg_state.addr = m_hwp_regs[i].address;
     reg_state.trigger_type = m_hwp_regs[i].mode;
-  }
+    reg_state.version = 1;
+    reg_state.addr_mode = PPC_BREAKPOINT_MODE_EXACT;
+    reg_state.condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
+    reg_state.addr2 = 0;
+    reg_state.condition_value = 0;
 
-  reg_state.version = 1;
-  reg_state.addr_mode = PPC_BREAKPOINT_MODE_EXACT;
-  reg_state.condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
-  reg_state.addr2 = 0;
-  reg_state.condition_value = 0;
+    error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_SETHWDEBUG, m_thread.GetID(),
+                                              0, &reg_state, sizeof(reg_state),
+                                              &ret);
 
-  long ret;
-  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_SETHWDEBUG, m_thread.GetID(),
-                                            0, &reg_state, sizeof(reg_state),
-                                            &ret);
+    if (error.Fail())
+      return error;
 
-  for (uint32_t i = 0; i < m_max_hwp_supported; i++) {
     m_hwp_regs[i].slot = ret;
   }
 
