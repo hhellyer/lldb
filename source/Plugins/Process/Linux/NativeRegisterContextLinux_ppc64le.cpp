@@ -706,7 +706,7 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
   // Create a backup we can revert to in case of failure.
   lldb::addr_t tempAddr = m_hwp_regs[wp_index].address;
   uint32_t tempControl = m_hwp_regs[wp_index].control;
-  long tempSlot = m_hwp_regs[wp_index].slot;
+  long * tempSlot = reinterpret_cast<long *>(m_hwp_regs[wp_index].slot);
 
   // Update watchpoint in local cache
   m_hwp_regs[wp_index].control &= ~1;
@@ -716,12 +716,12 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
 
   // Ptrace call to update hardware debug registers
   error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_DELHWDEBUG,
-                                            m_thread.GetID(), 0, &(tempSlot));
+                                            m_thread.GetID(), 0, tempSlot);
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].control = tempControl;
     m_hwp_regs[wp_index].address = tempAddr;
-    m_hwp_regs[wp_index].slot = tempSlot;
+    m_hwp_regs[wp_index].slot = reinterpret_cast<long>(tempSlot);
 
     return false;
   }
