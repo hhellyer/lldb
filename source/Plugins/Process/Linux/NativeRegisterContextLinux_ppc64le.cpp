@@ -715,8 +715,8 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
   m_hwp_regs[wp_index].mode = 0;
 
   // Ptrace call to update hardware debug registers
-  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_DELHWDEBUG, m_thread.GetID(),
-                                            0, &(tempSlot));
+  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_DELHWDEBUG,
+                                            m_thread.GetID(), 0, &(tempSlot));
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].control = tempControl;
@@ -748,7 +748,8 @@ NativeRegisterContextLinux_ppc64le::GetWatchpointSize(uint32_t wp_index) {
   }
 }
 
-bool NativeRegisterContextLinux_ppc64le::WatchpointIsEnabled(uint32_t wp_index) {
+bool NativeRegisterContextLinux_ppc64le::WatchpointIsEnabled(
+    uint32_t wp_index) {
   Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
   LLDB_LOG(log, "wp_index: {0}", wp_index);
 
@@ -819,8 +820,8 @@ Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
   struct ppc_debug_info hwdebug_info;
   Status error;
 
-  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_GETHWDBGINFO, tid, 0,
-                                            &hwdebug_info, sizeof(hwdebug_info));
+  error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_GETHWDBGINFO,
+          tid, 0, &hwdebug_info, sizeof(hwdebug_info));
 
   if (error.Fail())
     return error;
@@ -846,9 +847,8 @@ Status NativeRegisterContextLinux_ppc64le::WriteHardwareDebugRegs() {
     reg_state.addr2 = 0;
     reg_state.condition_value = 0;
 
-    error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_SETHWDEBUG, m_thread.GetID(),
-                                              0, &reg_state, sizeof(reg_state),
-                                              &ret);
+    error = NativeProcessLinux::PtraceWrapper(PPC_PTRACE_SETHWDEBUG,
+            m_thread.GetID(), 0, &reg_state, sizeof(reg_state), &ret);
 
     if (error.Fail())
       return error;
