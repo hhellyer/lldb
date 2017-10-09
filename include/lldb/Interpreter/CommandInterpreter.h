@@ -525,8 +525,7 @@ private:
                               CommandObject::CommandMap &command_map);
 
   // An interruptible wrapper around the stream output
-  void PrintCommandOutput(Stream &stream, llvm::StringRef str,
-                          bool interruptible);
+  void PrintCommandOutput(Stream &stream, llvm::StringRef str);
 
   // A very simple state machine which models the command handling transitions
   enum class CommandHandlingState {
@@ -537,6 +536,8 @@ private:
 
   std::atomic<CommandHandlingState> m_command_state{
       CommandHandlingState::eIdle};
+
+  int m_iohandler_nesting_level = 0;
 
   void StartHandlingCommand();
   void FinishHandlingCommand();

@@ -1541,6 +1541,12 @@ bool CommandInterpreter::HandleCommand(const char *command_line,
   if (!no_context_switching)
     UpdateExecutionContext(override_context);
 
+  if (WasInterrupted()) {
+    result.AppendError("interrupted");
+    result.SetStatus(eReturnStatusFailed);
+    return false;
+  }
+
   bool add_to_history;
   if (lazy_add_to_history == eLazyBoolCalculate)
     add_to_history = (m_command_source_depth == 0);
@@ -2210,7 +2216,7 @@ void CommandInterpreter::HandleCommands(const StringList &commands,
     m_debugger.SetAsyncExecution(false);
   }
 
-  for (size_t idx = 0; idx < num_lines; idx++) {
+  for (size_t idx = 0; idx < num_lines && !WasInterrupted(); idx++) {
     const char *cmd = commands.GetStringAtIndex(idx);
     if (cmd[0] == '\0')
       continue;
@@ -2678,13 +2684,21 @@ size_t CommandInterpreter::GetProcessOutput() {
 }
 
 void CommandInterpreter::StartHandlingCommand() {
-  auto prev_state = m_command_state.exchange(CommandHandlingState::eInProgress);
-  lldbassert(prev_state == CommandHandlingState::eIdle);
+  auto idle_state = CommandHandlingState::eIdle;
+  if (m_command_state.compare_exchange_strong(
+          idle_state, CommandHandlingState::eInProgress))
+    lldbassert(m_iohandler_nesting_level == 0);
+  else
+    lldbassert(m_iohandler_nesting_level > 0);
+  ++m_iohandler_nesting_level;
 }
 
 void CommandInterpreter::FinishHandlingCommand() {
-  auto prev_state = m_command_state.exchange(CommandHandlingState::eIdle);
-  lldbassert(prev_state != CommandHandlingState::eIdle);
+  lldbassert(m_iohandler_nesting_level > 0);
+  if (--m_iohandler_nesting_level == 0) {
+    auto prev_state = m_command_state.exchange(CommandHandlingState::eIdle);
+    lldbassert(prev_state != CommandHandlingState::eIdle);
+  }
 }
 
 bool CommandInterpreter::InterruptCommand() {
@@ -2694,42 +2708,42 @@ bool CommandInterpreter::InterruptCommand() {
 }
 
 bool CommandInterpreter::WasInterrupted() const {
-  return m_command_state == CommandHandlingState::eInterrupted;
+  bool was_interrupted =
+      (m_command_state == CommandHandlingState::eInterrupted);
+  lldbassert(!was_interrupted || m_iohandler_nesting_level > 0);
+  return was_interrupted;
 }
 
-void CommandInterpreter::PrintCommandOutput(Stream &stream, llvm::StringRef str,
-                                            bool interruptible) {
-  if (str.empty())
-    return;
-
-  if (interruptible) {
-    // Split the output into lines and poll for interrupt requests
-    const char *data = str.data();
-    size_t size = str.size();
-    while (size > 0 && !WasInterrupted()) {
-      size_t chunk_size = 0;
-      for (; chunk_size < size; ++chunk_size) {
-        lldbassert(data[chunk_size] != '\0');
-        if (data[chunk_size] == '\n') {
-          ++chunk_size;
-          break;
-        }
+void CommandInterpreter::PrintCommandOutput(Stream &stream,
+                                            llvm::StringRef str) {
+  // Split the output into lines and poll for interrupt requests
+  const char *data = str.data();
+  size_t size = str.size();
+  while (size > 0 && !WasInterrupted()) {
+    size_t chunk_size = 0;
+    for (; chunk_size < size; ++chunk_size) {
+      lldbassert(data[chunk_size] != '\0');
+      if (data[chunk_size] == '\n') {
+        ++chunk_size;
+        break;
       }
-      chunk_size = stream.Write(data, chunk_size);
-      lldbassert(size >= chunk_size);
-      data += chunk_size;
-      size -= chunk_size;
     }
-    if (size > 0) {
-      stream.Printf("\n... Interrupted.\n");
-    }
-  } else {
-    stream.PutCString(str);
+    chunk_size = stream.Write(data, chunk_size);
+    lldbassert(size >= chunk_size);
+    data += chunk_size;
+    size -= chunk_size;
+  }
+  if (size > 0) {
+    stream.Printf("\n... Interrupted.\n");
   }
 }
 
 void CommandInterpreter::IOHandlerInputComplete(IOHandler &io_handler,
                                                 std::string &line) {
+    // If we were interrupted, bail out...
+    if (WasInterrupted())
+      return;
+
   const bool is_interactive = io_handler.GetIsInteractive();
   if (is_interactive == false) {
     // When we are not interactive, don't execute blank lines. This will happen
@@ -2763,15 +2777,13 @@ void CommandInterpreter::IOHandlerInputComplete(IOHandler &io_handler,
 
     if (!result.GetImmediateOutputStream()) {
       llvm::StringRef output = result.GetOutputData();
-      PrintCommandOutput(*io_handler.GetOutputStreamFile(), output,
-                         is_interactive);
+      PrintCommandOutput(*io_handler.GetOutputStreamFile(), output);
     }
 
     // Now emit the command error text from the command we just executed
     if (!result.GetImmediateErrorStream()) {
       llvm::StringRef error = result.GetErrorData();
-      PrintCommandOutput(*io_handler.GetErrorStreamFile(), error,
-                         is_interactive);
+      PrintCommandOutput(*io_handler.GetErrorStreamFile(), error);
     }
   }
 
