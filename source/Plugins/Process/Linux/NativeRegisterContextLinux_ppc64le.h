@@ -89,14 +89,14 @@ private:
 
   // Debug register info for hardware watchpoints management.
   struct DREG {
-    lldb::addr_t address;  // Breakpoint/watchpoint address value.
-    lldb::addr_t hit_addr; // Address at which last watchpoint trigger exception
-                           // occurred.
+    lldb::addr_t address;   // Breakpoint/watchpoint address value.
+    lldb::addr_t hit_addr;  // Address at which last watchpoint trigger
+                            // exception occurred.
     lldb::addr_t real_addr; // Address value that should cause target to stop.
     uint32_t control;       // Breakpoint/watchpoint control value.
     uint32_t refcount;      // Serves as enable/disable and reference counter.
-    long slot;             // Saves the value returned from PTRACE_SETHWDEBUG.
-    int mode;              // Defines if watchpoint is read/write/access.
+    long slot;              // Saves the value returned from PTRACE_SETHWDEBUG.
+    int mode;               // Defines if watchpoint is read/write/access.
   };
 
   struct DREG m_hwp_regs[4];
