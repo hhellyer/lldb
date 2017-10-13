@@ -86,11 +86,6 @@ NativeRegisterContextLinux_ppc64le::NativeRegisterContextLinux_ppc64le(
 
   ::memset(&m_gpr_ppc64le, 0, sizeof(m_gpr_ppc64le));
   ::memset(&m_hwp_regs, 0, sizeof(m_hwp_regs));
-
-  // 16 is just a maximum value, query hardware for actual watchpoint count
-  m_max_hwp_supported = 16;
-  m_max_hbp_supported = 16;
-  m_refresh_hwdebug_info = true;
 }
 
 uint32_t NativeRegisterContextLinux_ppc64le::GetRegisterSetCount() const {

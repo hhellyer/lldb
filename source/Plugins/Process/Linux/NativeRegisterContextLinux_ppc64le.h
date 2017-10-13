@@ -101,10 +101,10 @@ private:
 
   struct DREG m_hwp_regs[4];
 
-  uint32_t m_max_hwp_supported;
-  uint32_t m_max_hbp_supported;
-  bool m_refresh_hwdebug_info;
-
+  // 16 is just a maximum value, query hardware for actual watchpoint count
+  uint32_t m_max_hwp_supported = 16;
+  uint32_t m_max_hbp_supported = 16;
+  bool m_refresh_hwdebug_info = true;
 };
 
 } // namespace process_linux
