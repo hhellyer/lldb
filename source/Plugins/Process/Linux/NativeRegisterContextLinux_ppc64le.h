@@ -99,7 +99,7 @@ private:
     int mode;               // Defines if watchpoint is read/write/access.
   };
 
-  struct DREG m_hwp_regs[4];
+  std::array<DREG, 4> m_hwp_regs;
 
   // 16 is just a maximum value, query hardware for actual watchpoint count
   uint32_t m_max_hwp_supported = 16;
