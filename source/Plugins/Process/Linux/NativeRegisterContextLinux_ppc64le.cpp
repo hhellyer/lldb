@@ -394,18 +394,9 @@ NativeRegisterContextLinux_ppc64le::GetWatchpointSize(uint32_t wp_index) {
   Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
   LLDB_LOG(log, "wp_index: {0}", wp_index);
 
-  switch ((m_hwp_regs[wp_index].control >> 5) & 0xff) {
-  case 0x01:
-    return 1;
-  case 0x03:
-    return 2;
-  case 0x0f:
-    return 4;
-  case 0xff:
-    return 8;
-  default:
-    return 0;
-  }
+  unsigned control = (m_hwp_regs[wp_index].control >> 5) & 0xff;
+  assert(llvm::isPowerOf2_32(control+1));
+  return llvm::countPopulation(control);
 }
 
 bool NativeRegisterContextLinux_ppc64le::WatchpointIsEnabled(
