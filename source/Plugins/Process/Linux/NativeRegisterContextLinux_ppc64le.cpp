@@ -341,7 +341,7 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
 
   if (error.Fail()) {
     m_hwp_regs[wp_index].address = 0;
-    m_hwp_regs[wp_index].control &= ~1;
+    m_hwp_regs[wp_index].control &= llvm::maskTrailingZeros<uint32_t>(1);
 
     return LLDB_INVALID_INDEX32;
   }
@@ -369,7 +369,7 @@ bool NativeRegisterContextLinux_ppc64le::ClearHardwareWatchpoint(
   long * tempSlot = reinterpret_cast<long *>(m_hwp_regs[wp_index].slot);
 
   // Update watchpoint in local cache
-  m_hwp_regs[wp_index].control &= ~1;
+  m_hwp_regs[wp_index].control &= llvm::maskTrailingZeros<uint32_t>(1);
   m_hwp_regs[wp_index].address = 0;
   m_hwp_regs[wp_index].slot = 0;
   m_hwp_regs[wp_index].mode = 0;
