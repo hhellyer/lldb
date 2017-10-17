@@ -404,10 +404,7 @@ bool NativeRegisterContextLinux_ppc64le::WatchpointIsEnabled(
   Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
   LLDB_LOG(log, "wp_index: {0}", wp_index);
 
-  if ((m_hwp_regs[wp_index].control & 0x1) == 0x1)
-    return true;
-  else
-    return false;
+  return !!((m_hwp_regs[wp_index].control & 0x1) == 0x1);
 }
 
 Status NativeRegisterContextLinux_ppc64le::GetWatchpointHitIndex(
