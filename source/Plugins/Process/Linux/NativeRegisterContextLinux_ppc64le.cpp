@@ -457,8 +457,8 @@ NativeRegisterContextLinux_ppc64le::GetWatchpointHitAddress(uint32_t wp_index) {
 
   if (WatchpointIsEnabled(wp_index))
     return m_hwp_regs[wp_index].hit_addr;
-  else
-    return LLDB_INVALID_ADDRESS;
+
+  return LLDB_INVALID_ADDRESS;
 }
 
 Status NativeRegisterContextLinux_ppc64le::ReadHardwareDebugInfo() {
