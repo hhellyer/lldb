@@ -304,16 +304,10 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
   // Below is a hack to recalculate address and size in order to
   // make sure we can watch non 8-byte alligned addresses as well.
   if (addr & 0x07) {
-    uint8_t watch_mask = (addr & 0x07) + size;
 
-    if (watch_mask > 0x08)
-      return LLDB_INVALID_INDEX32;
-    else if (watch_mask <= 0x02)
-      size = 2;
-    else if (watch_mask <= 0x04)
-      size = 4;
-    else
-      size = 8;
+    addr_t begin = llvm::alignDown(addr, 8);
+    addr_t end = llvm::alignTo(addr+size, 8);
+    size = llvm::PowerOf2Ceil(end-begin);
 
     addr = addr & (~0x07);
   }
