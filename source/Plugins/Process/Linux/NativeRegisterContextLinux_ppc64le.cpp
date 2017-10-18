@@ -54,7 +54,13 @@ static const uint32_t g_gpr_regnums_ppc64le[] = {
 
 namespace {
 // Number of register sets provided by this context.
-enum { k_num_register_sets = 1 };
+  enum { k_num_register_sets = 1 };
+
+  enum watch_mode {
+    write_mode = 1,
+    read_mode = 2,
+    access_mode = 3
+  };
 }
 
 static const RegisterSet g_reg_sets_ppc64le[k_num_register_sets] = {
@@ -275,15 +281,15 @@ uint32_t NativeRegisterContextLinux_ppc64le::SetHardwareWatchpoint(
   // Check if we are setting watchpoint other than read/write/access
   // Update watchpoint flag to match ppc64le write-read bit configuration.
   switch (watch_flags) {
-  case 1:
+  case write_mode:
     rw_mode = PPC_BREAKPOINT_TRIGGER_WRITE;
     watch_flags = 2;
     break;
-  case 2:
+  case read_mode:
     rw_mode = PPC_BREAKPOINT_TRIGGER_READ;
     watch_flags = 1;
     break;
-  case 3:
+  case access_mode:
     rw_mode = PPC_BREAKPOINT_TRIGGER_RW;
     break;
   default:
