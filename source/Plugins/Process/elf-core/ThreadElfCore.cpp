@@ -28,6 +28,7 @@
 #include "Plugins/Process/Utility/RegisterContextOpenBSD_x86_64.h"
 #include "Plugins/Process/Utility/RegisterInfoPOSIX_arm.h"
 #include "Plugins/Process/Utility/RegisterInfoPOSIX_arm64.h"
+#include "Plugins/Process/Utility/RegisterInfoPOSIX_ppc64le.h"
 #include "ProcessElfCore.h"
 #include "RegisterContextPOSIXCore_arm.h"
 #include "RegisterContextPOSIXCore_arm64.h"
@@ -98,6 +99,7 @@ ThreadElfCore::CreateRegisterContextForFrame(StackFrame *frame) {
         reg_interface = new RegisterContextFreeBSD_powerpc32(arch);
         break;
       case llvm::Triple::ppc64:
+      case llvm::Triple::ppc64le:
         reg_interface = new RegisterContextFreeBSD_powerpc64(arch);
         break;
       case llvm::Triple::mips64:
@@ -150,6 +152,10 @@ ThreadElfCore::CreateRegisterContextForFrame(StackFrame *frame) {
         break;
       case llvm::Triple::x86_64:
         reg_interface = new RegisterContextLinux_x86_64(arch);
+        break;
+      case llvm::Triple::ppc64:
+      case llvm::Triple::ppc64le:
+        reg_interface = new RegisterInfoPOSIX_ppc64le(arch);
         break;
       default:
         break;
@@ -209,6 +215,7 @@ ThreadElfCore::CreateRegisterContextForFrame(StackFrame *frame) {
       break;
     case llvm::Triple::ppc:
     case llvm::Triple::ppc64:
+    case llvm::Triple::ppc64le:
       m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_powerpc(
           *this, reg_interface, m_gpregset_data, m_fpregset_data,
           m_vregset_data));
@@ -265,6 +272,8 @@ size_t ELFLinuxPrStatus::GetSize(lldb_private::ArchSpec &arch) {
   switch (arch.GetCore()) {
   case lldb_private::ArchSpec::eCore_s390x_generic:
   case lldb_private::ArchSpec::eCore_x86_64_x86_64:
+  case lldb_private::ArchSpec::eCore_ppc64_generic:
+  case lldb_private::ArchSpec::eCore_ppc64le_generic:
     return sizeof(ELFLinuxPrStatus);
   case lldb_private::ArchSpec::eCore_x86_32_i386:
   case lldb_private::ArchSpec::eCore_x86_32_i486:
@@ -335,6 +344,8 @@ size_t ELFLinuxPrPsInfo::GetSize(lldb_private::ArchSpec &arch) {
   switch (arch.GetCore()) {
   case lldb_private::ArchSpec::eCore_s390x_generic:
   case lldb_private::ArchSpec::eCore_x86_64_x86_64:
+  case lldb_private::ArchSpec::eCore_ppc64_generic:
+  case lldb_private::ArchSpec::eCore_ppc64le_generic:
     return sizeof(ELFLinuxPrPsInfo);
   case lldb_private::ArchSpec::eCore_x86_32_i386:
   case lldb_private::ArchSpec::eCore_x86_32_i486:
@@ -403,6 +414,8 @@ size_t ELFLinuxSigInfo::GetSize(const lldb_private::ArchSpec &arch) {
     return sizeof(ELFLinuxSigInfo);
   switch (arch.GetCore()) {
   case lldb_private::ArchSpec::eCore_x86_64_x86_64:
+  case lldb_private::ArchSpec::eCore_ppc64_generic:
+  case lldb_private::ArchSpec::eCore_ppc64le_generic:
     return sizeof(ELFLinuxSigInfo);
   case lldb_private::ArchSpec::eCore_s390x_generic:
   case lldb_private::ArchSpec::eCore_x86_32_i386:

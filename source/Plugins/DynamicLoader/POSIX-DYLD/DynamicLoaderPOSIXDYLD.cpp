@@ -599,7 +599,8 @@ addr_t DynamicLoaderPOSIXDYLD::GetEntryPoint() {
   const ArchSpec &arch = m_process->GetTarget().GetArchitecture();
 
   // On ppc64, the entry point is actually a descriptor.  Dereference it.
-  if (arch.GetMachine() == llvm::Triple::ppc64)
+  if (arch.GetMachine() == llvm::Triple::ppc64
+      || arch.GetMachine() == llvm::Triple::ppc64le)
     m_entry_point = ReadUnsignedIntWithSizeInBytes(m_entry_point, 8);
 
   return m_entry_point;

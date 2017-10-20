@@ -344,6 +344,10 @@ static uint32_t subTypeFromElfHeader(const elf::ELFHeader &header) {
   if (header.e_machine == llvm::ELF::EM_MIPS)
     return mipsVariantFromElfFlags(header);
 
+  if (header.e_machine == llvm::ELF::EM_PPC64) {
+    return header.GetByteOrder();
+  }
+
   return llvm::ELF::EM_CSR_KALIMBA == header.e_machine
              ? kalimbaVariantFromElfFlags(header.e_flags)
              : LLDB_INVALID_CPUTYPE;
